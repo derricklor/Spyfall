@@ -7,6 +7,14 @@ A web-based implementation of the popular social deduction game SpyFall.
 
 ### Prerequisites
 - Node.js and npm installed.
+- MongoDB Community Edition installed and running as a service.
+
+#### MongoDB Installation (Windows)
+1.  Download the MongoDB Community Server installer (.msi) from the [MongoDB Download Center](https://www.mongodb.com/try/download/community).
+2.  Run the installer.
+3.  Choose the "Complete" setup type.
+4.  On the "Service Configuration" screen, make sure "Install MongoDB as a Service" is selected and keep the default settings.
+5.  Complete the installation. MongoDB should now be running in the background as a Windows service.
 
 ### Backend (Server)
 1. Navigate to the `server` directory:
