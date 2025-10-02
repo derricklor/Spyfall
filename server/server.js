@@ -1,19 +1,29 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser')
+//const cookieParser = require('cookie-parser')
 const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const Location = require('./locationSchema'); // constructor schema
 const Room = require('./roomSchema');
 const initLocations = require('./initLocations');
 
-const cookieSecret = 'your_cookie_secret_here';
+//const cookieSecret = 'your_cookie_secret_here';
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: 'http://localhost:5173',
+        methods: ['GET', 'POST'],
+    },
+});
+
 app.use(express.json());
 app.use(bodyParser.json());
-app.use(cookieParser(cookieSecret))
+//app.use(cookieParser(cookieSecret))
 app.use(cors());
 const port = process.env.PORT || 3000;
 
@@ -77,42 +87,42 @@ app.get('/api/location/:id', async (req, res) => {
     }
 });
 
-app.get('/room/:code', async (req, res) => {
-    try {
-        const room = await Room.findOne({ roomCode: req.params.code });
-        if (room) {
-            serverLog(`Fetched room with code: ${req.params.code}`);
-            //make unique name and give to user as cookie if they don't have one
-            let name = req.signedCookies.name;
-            if (!name) {
-                let newName;
-                const existingNames = new Set(room.players.map(p => p.name));
-                do {
-                    newName = generateRoomCode();
-                } while (existingNames.has(newName));
-                name = newName;
-                res.cookie('name', newName, { signed: true, httpOnly: true, maxAge: 10 * 60 * 1000 }); // 10 minutes
-            }
+// app.get('/room/:code', async (req, res) => {
+//     try {
+//         const room = await Room.findOne({ roomCode: req.params.code });
+//         if (room) {
+//             serverLog(`Fetched room with code: ${req.params.code}`);
+//             //make unique name and give to user as cookie if they don't have one
+//             let name = req.signedCookies.name;
+//             if (!name) {
+//                 let newName;
+//                 const existingNames = new Set(room.players.map(p => p.name));
+//                 do {
+//                     newName = generateRoomCode();
+//                 } while (existingNames.has(newName));
+//                 name = newName;
+//                 res.cookie('name', newName, { signed: true, httpOnly: true, maxAge: 10 * 60 * 1000 }); // 10 minutes
+//             }
             
-            //add player to room if not already present
-            if (!room.players.some(p => p.name === name)) { // .some returns true if player with this name already exists
-                //code block executes if player with this name does not exist
-                serverLog(`Adding new player: ${name} to room: ${req.params.code}`);
-                const newPlayer = { name: name, role: 'null', votedFor: null }; //role will be assigned later, so set to null for now
-                await Room.updateOne({ roomCode: req.params.code }, { $push: { players: newPlayer } });
-            }
+//             //add player to room if not already present
+//             if (!room.players.some(p => p.name === name)) { // .some returns true if player with this name already exists
+//                 //code block executes if player with this name does not exist
+//                 serverLog(`Adding new player: ${name} to room: ${req.params.code}`);
+//                 const newPlayer = { name: name, role: 'null', votedFor: null }; //role will be assigned later, so set to null for now
+//                 await Room.updateOne({ roomCode: req.params.code }, { $push: { players: newPlayer } });
+//             }
 
-            res.status(200).json(room);// return something meaningful here
+//             res.status(200).json(room);// return something meaningful here
 
-        } else {
-            serverLog(`Room with code: ${req.params.code} not found.`);
-            res.status(404).json({ error: 'Room not found' });
-        }
-    } catch (error) {
-        serverLog(`Error fetching room: ${error.message}`);
-        res.status(500).json({ error: 'Error fetching room' });
-    }
-});
+//         } else {
+//             serverLog(`Room with code: ${req.params.code} not found.`);
+//             res.status(404).json({ error: 'Room not found' });
+//         }
+//     } catch (error) {
+//         serverLog(`Error fetching room: ${error.message}`);
+//         res.status(500).json({ error: 'Error fetching room' });
+//     }
+// });
 
 app.post('/api/add/location', async (req, res) => {
     try {
@@ -153,12 +163,50 @@ app.post('/api/create/room', async (req, res) => {
     }
 });
 
+io.on('connection', (socket) => {
+    serverLog('a user connected');
+
+    socket.on('joinRoom', async ({ roomCode }) => {
+        try {
+            const room = await Room.findOne({ roomCode });
+            if (room) { // Room exists
+                let playerName; // generate unique name for player
+                const existingNames = new Set(room.players.map(p => p.name)); // get set of existing player names in room
+                do {
+                    playerName = generateRoomCode();
+                } while (existingNames.has(playerName)); // ensure name is unique in this room
+
+                //res.cookie('name', name, { signed: true, httpOnly: true, maxAge: 10 * 60 * 1000 }); // 10 minutes
+                
+                // Add player to the room
+                const newPlayer = { name: playerName, role: 'null', votedFor: null };
+                room.players.push(newPlayer);
+                await room.save();
+                
+                socket.join(roomCode);
+                serverLog(`Player ${playerName} joined room ${roomCode}.`);
+
+                io.to(roomCode).emit('playerJoined', room.players); // Notify all clients in the room about the new player list
+            } else {
+                socket.emit('roomNotFound', { message: `Room with code ${roomCode} not found.` });
+            }
+        } catch (error) {
+            serverLog(`Error joining room: ${error.message}`);
+            //socket.emit('error', { message: 'Error joining room' });
+        }
+    });
+
+    socket.on('disconnect', () => {
+        serverLog('user disconnected');
+    });
+});
+
 mongoose.connect(mongo_uri)
     .then(() => {
         serverLog('Successfully connected to MongoDB!');
         initDB().then(() => {
 
-            app.listen(port, () => {
+            server.listen(port, () => {
             serverLog(`Server is running on port: ${port}`);
         });
     
