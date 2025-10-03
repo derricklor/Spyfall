@@ -166,6 +166,38 @@ app.post('/api/create/room', async (req, res) => {
 io.on('connection', (socket) => {
     serverLog('a user connected');
 
+    //create room
+    socket.on('createRoom', async () => {
+        try{
+            let newRoomCode = generateRoomCode();
+            let existingRoom = await Room.findOne({ roomCode: newRoomCode });
+            while (existingRoom) {
+                //if room code already exists, generate a new one
+                newRoomCode = generateRoomCode();
+                existingRoom = await Room.findOne({ roomCode: newRoomCode });
+            }
+            //add host as first player in room
+            let hostName = generateRoomCode(); // generate random name for host
+            //create room in db
+            const newRoom = new Room({ 
+                roomCode: newRoomCode,
+                players: [{ name: hostName, socketID: socket.id, isHost: true }], // role will be assigned later, so set to null for now
+                gameState: 'waiting',
+                location: null, // location will be set later
+                //createdAt will default to Date.now
+            });
+            const savedRoom = await newRoom.save(); //save newRoom to db collection
+            socket.join(newRoomCode);//join socket.io room with room code
+            socket.emit('roomCreated', { roomCode: savedRoom.roomCode });//emit roomCreated event with room code to host client
+            serverLog(`Created new room with id: ${savedRoom._id}, and code: ${savedRoom.roomCode}`);
+        }
+        catch (error) {
+            serverLog(`Error creating room: ${error.message}`);
+            socket.emit('error', { message: 'Error creating room' });
+        }
+    });
+
+    //join room
     socket.on('joinRoom', async ({ roomCode }) => {
         try {
             const room = await Room.findOne({ roomCode });
@@ -176,12 +208,10 @@ io.on('connection', (socket) => {
                     playerName = generateRoomCode();
                 } while (existingNames.has(playerName)); // ensure name is unique in this room
 
-                //res.cookie('name', name, { signed: true, httpOnly: true, maxAge: 10 * 60 * 1000 }); // 10 minutes
-                
                 // Add player to the room
-                const newPlayer = { name: playerName, role: 'null', votedFor: null };
-                room.players.push(newPlayer);
-                await room.save();
+                await Room.updateOne({ roomCode }, { $push: { players: { name: playerName, socketID: socket.id } } });
+                // non required will be assigned later
+                await Room.save();
                 
                 socket.join(roomCode);
                 serverLog(`Player ${playerName} joined room ${roomCode}.`);
@@ -195,9 +225,47 @@ io.on('connection', (socket) => {
             //socket.emit('error', { message: 'Error joining room' });
         }
     });
+    // start game
+    socket.on('startGame', async ({ roomCode, name }) => {
+        try {
+            const room = await Room.find({ roomCode });
+            if (room) {
+                //only host can start game
+                const player = room.players.find(p => p.name === name);
+                if (player && player.isHost) {
+                    //assign roles to players
+                    const location = await Location.findById(room.location);
+                    const roles = location.roles; // array of roles for this location
+                    const numPlayers = room.players.length;
+                    const numSpies = Math.max(1, Math.floor(numPlayers / 4)); // at least 1 spy, 1 spy per 4 players
+                    const assignedRoles = roles.slice(0, numPlayers - numSpies).concat(Array(numSpies).fill('Spy'));
+                    //shuffle assignedRoles again to randomize spy positions
+                    const finalRoles = assignedRoles.sort(() => Math.random() - 0.5);
+                    //assign roles to players in room
+                    room.players.forEach((p, index) => {
+                        p.role = finalRoles[index];
+                    });
+                    room.gameState = 'in-progress';
+                    await room.save();
+                    io.to(roomCode).emit('gameStarted', room.players); // notify all players game has started and send player list with roles
+                }
+                socket.emit('notAuthorized', { message: 'Only the host can start the game.' });
+            }
+        }
+        catch (error) {
+            serverLog(`Error starting game: ${error.message}`);
+            socket.emit('error', { message: 'Error starting game' });
+        }
 
-    socket.on('disconnect', () => {
-        serverLog('user disconnected');
+    //leave room
+    socket.on('disconnect', async () => {
+        serverLog(`user disconnected: ${socket.id}`);
+        //remove player from room they were in
+        const room = await Room.findOne({ 'players.socketID': socket.id });
+        room.players = room.players.filter(p => p.socketID !== socket.id);
+        await room.save();
+        //notify other players in room
+        io.to(room.roomCode).emit('playerLeft', room.players);
     });
 });
 
@@ -205,12 +273,10 @@ mongoose.connect(mongo_uri)
     .then(() => {
         serverLog('Successfully connected to MongoDB!');
         initDB().then(() => {
-
             server.listen(port, () => {
-            serverLog(`Server is running on port: ${port}`);
+                serverLog(`Server is running on port: ${port}`);
+            });
         });
-    
-});
     })
     .catch(err => {
         console.error('Error connecting to MongoDB:', err.message);

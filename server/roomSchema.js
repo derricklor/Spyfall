@@ -10,8 +10,10 @@ const roomSchema = new mongoose.Schema({
     },
     players: [{
         name: { type: String, required: true },
-        role: { type: String, required: true },
-        votedFor: { type: String, default: null }
+        socketID: { type: String, required: true },
+        role: { type: String, default: null },
+        votedFor: { type: String, default: null },
+        isHost: { type: Boolean, default: false }
     }],
     gameState: {
         type: String,
@@ -20,7 +22,8 @@ const roomSchema = new mongoose.Schema({
     },
     location: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Location'
+        ref: 'Location',
+        default: null
     },
     createdAt: {
         type: Date,
