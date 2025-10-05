@@ -13,22 +13,32 @@ const roomSchema = new mongoose.Schema({
         socketID: { type: String, required: true },
         role: { type: String, default: null },
         votedFor: { type: String, default: null },
-        isHost: { type: Boolean, default: false }
+        isHost: { type: Boolean, default: false },
     }],
     gameState: {
         type: String,
         enum: ['waiting', 'in-progress', 'voting', 'finished'],
-        default: 'waiting'
+        default: 'waiting',
+    },
+    voteCount: {
+        type: Number,
+        default: 0
+    },
+    voteOffCooldown: { 
+        //date when voting can next occur
+        type: Date,
+        default: null
     },
     location: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Location',
         default: null
     },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        expires: '10m' // Rooms will be automatically deleted after 10 minutes
+    gameLength: {
+        type: Number,
+        default: 8, // default game length in minutes
+        min: 1,
+        max: 60
     }
 });
 const Room = mongoose.model('Room', roomSchema);

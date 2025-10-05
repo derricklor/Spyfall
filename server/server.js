@@ -136,32 +136,54 @@ app.post('/api/add/location', async (req, res) => {
     }
 });
 
-app.post('/api/create/room', async (req, res) => {
-    try {
-        let roomCode = generateRoomCode();
-        let existingRoom = await Room.findOne({ roomCode });
-        while (existingRoom) {
-            roomCode = generateRoomCode();
-            existingRoom = await Room.findOne({ roomCode });
-        }
+// app.post('/api/create/room', async (req, res) => {
+//     try {
+//         let roomCode = generateRoomCode();
+//         let existingRoom = await Room.findOne({ roomCode });
+//         while (existingRoom) {
+//             roomCode = generateRoomCode();
+//             existingRoom = await Room.findOne({ roomCode });
+//         }
 
-        const newRoom = new Room({ 
-            roomCode: roomCode,
-            players: [{ name: 'Player 1', role: 'null', votedFor: null }],
-            gameState: 'waiting',
-            location: req.body.location
-            //createdAt will default to Date.now
-        });
-        const savedRoom = await Room.save();
-        serverLog(`Created new room with id: ${savedRoom._id}, and code: ${savedRoom.roomCode}`);
-        let name = generateRoomCode();
-        res.cookie('name', name, { httpOnly: true, maxAge: 10 * 60 * 1000 }); // 10 minutes
-        res.status(201).json({code: savedRoom.roomCode});
-    } catch (error) {
-        serverLog(`Error creating room: ${error.message}`);
-        res.status(500).json({ error: 'Error creating room' });
+//         const newRoom = new Room({ 
+//             roomCode: roomCode,
+//             players: [{ name: 'Player 1', role: 'null', votedFor: null }],
+//             gameState: 'waiting',
+//             location: req.body.location
+//         });
+//         const savedRoom = await Room.save();
+//         serverLog(`Created new room with id: ${savedRoom._id}, and code: ${savedRoom.roomCode}`);
+//         let name = generateRoomCode();
+//         res.cookie('name', name, { httpOnly: true, maxAge: 10 * 60 * 1000 }); // 10 minutes
+//         res.status(201).json({code: savedRoom.roomCode});
+//     } catch (error) {
+//         serverLog(`Error creating room: ${error.message}`);
+//         res.status(500).json({ error: 'Error creating room' });
+//     }
+// });
+
+// function to check if majority of players have voted for someone
+//if so, eliminate that player and the end game
+//if the eliminated player is the spy, they have one guess to pick the location
+//if they guess right, spies win, else non-spies win
+//if the eliminated player is not the spy, the game ends and the spies win
+//if all players have voted, end the voting early
+//reset votes and return to in-progress state if no one is eliminated
+function checkVotes(roomDocument) {
+    let voteMap = new Map();
+    const numMajority = Math.floor(roomDocument.players.length / 2) + 1; //more than half
+    roomDocument.players.forEach(player => {
+        if (player.votedFor) {
+            voteMap.set(player.votedFor, (voteMap.get(player.votedFor) || 0) + 1);
+        }
+    });
+    for (let [playerName, count] of voteMap.entries()) {
+        if (count >= numMajority) {
+            return playerName; //player to be eliminated
+        }
     }
-});
+    return null; //no player has majority votes
+}
 
 io.on('connection', (socket) => {
     serverLog('a user connected');
@@ -184,7 +206,6 @@ io.on('connection', (socket) => {
                 players: [{ name: hostName, socketID: socket.id, isHost: true }], // role will be assigned later, so set to null for now
                 gameState: 'waiting',
                 location: null, // location will be set later
-                //createdAt will default to Date.now
             });
             const savedRoom = await newRoom.save(); //save newRoom to db collection
             socket.join(newRoomCode);//join socket.io room with room code
@@ -230,15 +251,31 @@ io.on('connection', (socket) => {
         try {
             const room = await Room.find({ roomCode });
             if (room) {
+                //game already started
+                if (room.gameState !== 'waiting') {
+                    socket.emit('gameAlreadyStarted', { message: 'Game has already started.' });
+                    return;
+                }
+                //must have at least 3 players to start game
+                if (room.players.length < 3) {
+                    socket.emit('notEnoughPlayers', { message: 'At least 3 players are required to start the game.' });
+                    return;
+                }
                 //only host can start game
                 const player = room.players.find(p => p.name === name);
-                if (player && player.isHost) {
+                if (player && player.isHost && socket.id === player.socketID) {
                     //assign roles to players
                     const location = await Location.findById(room.location);
                     const roles = location.roles; // array of roles for this location
                     const numPlayers = room.players.length;
+                    const multi = Math.ceil(numPlayers / roles.length);
+                    //create array of roles with enough roles for all players
+                    const extendedRoles = [];
+                    for (let i = 0; i < multi; i++) {
+                        extendedRoles.push(...roles);
+                    }
                     const numSpies = Math.max(1, Math.floor(numPlayers / 4)); // at least 1 spy, 1 spy per 4 players
-                    const assignedRoles = roles.slice(0, numPlayers - numSpies).concat(Array(numSpies).fill('Spy'));
+                    const assignedRoles = extendedRoles.slice(0, numPlayers - numSpies).concat(Array(numSpies).fill('Spy'));
                     //shuffle assignedRoles again to randomize spy positions
                     const finalRoles = assignedRoles.sort(() => Math.random() - 0.5);
                     //assign roles to players in room
@@ -247,16 +284,146 @@ io.on('connection', (socket) => {
                     });
                     room.gameState = 'in-progress';
                     await room.save();
-                    io.to(roomCode).emit('gameStarted', room.players); // notify all players game has started and send player list with roles
+                    io.to(roomCode).emit('gameStarted', {message: "Game has started."}); // notify all players game has started
+                    //for each player, emit their role privately
+                    room.players.forEach(p => {
+                        io.to(p.socketID).emit('roleAssigned', { location: room.location, role: p.role });
+                    });
+                    //set timeout to enter final voting state after room.gameLength minutes
+                    setTimeout(async () => {
+                        const endedRoom = await Room.find({ roomCode });
+                        if (endedRoom && endedRoom.gameState === 'in-progress') {
+                            endedRoom.gameState = 'voting';
+                            endedRoom.voteCount = 0;
+                        }
+                        await endedRoom.save();
+                        io.to(roomCode).emit('finalVotingStarted', { message: 'Final Voting has started. Please vote to eliminate the spy.' });
+                    }, room.gameLength * 60 * 1000); // convert minutes to milliseconds
                 }
                 socket.emit('notAuthorized', { message: 'Only the host can start the game.' });
+            } else {
+                socket.emit('roomNotFound', { message: `Room with code ${roomCode} not found.` });
             }
         }
         catch (error) {
             serverLog(`Error starting game: ${error.message}`);
             socket.emit('error', { message: 'Error starting game' });
         }
+    });
 
+    //player voted for someone
+    socket.on('vote', async ({ roomCode, name, votedFor }) => {
+        try {
+            let room = await Room.find({roomCode});
+            if (room) {
+                //game must be in voting state to vote
+                if (room.gameState !== 'voting') {
+                    socket.emit('notInVotingState', { message: 'Game is not in voting state.' });
+                    return;
+                }
+                //check socket id matches player name
+                const player = room.players.find(p => p.name === name);
+                if (player && player.socketID === socket.id) {
+                    //check votedFor is a valid player in room
+                    if (!room.players.some(p => p.name === votedFor)) {
+                        socket.emit('invalidVote', { message: 'You voted for an invalid player.' });
+                        return;
+                    }
+                    //record vote and increment vote count
+                    await Room.updateOne({ roomCode, 'players.name': name },
+                        { $set: { 'players.$.votedFor': votedFor }, $inc: { voteCount: 1 } }); 
+                        //.$. is positional operator to update matched array element from query
+                    
+                    await Room.save();
+
+                    //if player is last to vote, end voting early
+                    if (room.voteCount >= room.players.length - 1) {
+                        //all players have voted, end voting early
+                        io.to(roomCode).emit('votingEnded', { message: "Voting has ended."}); // notify all players voting has ended
+                        const eliminatedPlayerName = checkVotes(room);
+                    }
+                    //io.to(roomCode).emit('playerVoted', updatedRoom.players); // notify all players in room of updated player list with votes
+                    
+                   
+                } else {
+                    socket.emit('notAuthorized', { message: 'You are not authorized to vote for this player.' });
+                }
+            } else {
+                socket.emit('roomNotFound', { message: `Room with code ${roomCode} not found.` });
+            }
+        }
+        catch (error) {
+
+            socket.emit('error', { message: 'Error voting' });
+        }
+    });
+
+    //call for a vote
+    socket.on('callVote', async ({ roomCode, name }) => {
+        try {
+            const room = await Room.findOne({ roomCode });
+            if (room) {
+                //anyone in room can call for a vote once game is in progress
+                if (room.gameState !== 'in-progress') {
+                    socket.emit('notInProgressState', { message: 'Game is not in progress.' });
+                    return;
+                }
+                //if already in voting state, cannot call another vote
+                if (room.gameState === 'voting') {
+                    socket.emit('alreadyInVotingState', { message: 'Game is already in voting state.' });
+                    return;
+                }
+                //if voteOffCooldown is set and in the future, cannot call another vote yet
+                if (room.voteOffCooldown && room.voteOffCooldown > new Date()) {
+                    const waitTime = Math.ceil((room.voteOffCooldown - new Date()) / 1000); // seconds
+                    socket.emit('voteCooldownActive', { message: `You must wait ${waitTime} seconds before calling another vote.` });
+                    return;
+                }
+                const player = room.players.find(p => p.name === name);
+                if (player && player.socketID === socket.id) {
+                    room.gameState = 'voting';
+                    //reset all players' votedFor to null
+                    room.players.forEach(p => p.votedFor = null);
+                    await room.save();
+                    io.to(roomCode).emit('voteCalled', { message: 'A vote has been called.' }); // notify all players in room that voting has started
+                    //start timeout to end voting after 30 seconds
+                    setTimeout(async () => {
+                        const updatedRoom = await Room.findOne({ roomCode });
+                        if (updatedRoom && updatedRoom.gameState === 'voting') {
+                            updatedRoom.gameState = 'in-progress';
+                            updatedRoom.voteCount = 0;
+                            updatedRoom.voteOffCooldown = new Date(Date.now() + 1 * 60 * 1000); // set cooldown to 1 minute from end of vote
+                        }
+                        await updatedRoom.save();
+                        io.to(roomCode).emit('votingEnded', { message: 'The vote has ended.' }); // notify all players voting has ended
+                        const eliminatedPlayerName = checkVotes(updatedRoom);
+                        if (eliminatedPlayerName) {
+                            const eliminatedPlayer = updatedRoom.players.find(p => p.name === eliminatedPlayerName);
+                            io.to(roomCode).emit('playerEliminated', { message: `${eliminatedPlayerName} has been voted as the Spy.`});
+                            //if eliminated player is spy, they get one guess to pick location
+                            if (eliminatedPlayer.role === 'Spy') {
+                                io.to(roomCode).emit('spyGuessCorrect', { message: 'You have correctly guessed the Spy! The Spy has one guess to pick the correct location.' });
+                            } else {
+                                //non-spy eliminated, spies win
+                                io.to(roomCode).emit('gameEnded', { message: 'You have guessed incorrectly. Spies win!' });
+                                updatedRoom.gameState = 'finished';
+                                await updatedRoom.save();
+                            }
+                        }
+                        io.to(roomCode).emit('gameResumed', { message: 'The game has resumed.' });
+                    }, 0.5 * 60 * 1000); // 30 seconds
+                } else {
+                    socket.emit('notAuthorized', { message: 'You are not authorized to call a vote.' });
+                }
+            } else {
+                socket.emit('roomNotFound', { message: `Room with code ${roomCode} not found.` });
+            }
+        } catch (error) {
+            socket.emit('error', { message: 'Error calling vote' });
+        }
+    });
+    
+    
     //leave room
     socket.on('disconnect', async () => {
         serverLog(`user disconnected: ${socket.id}`);
