@@ -25,6 +25,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 //app.use(cookieParser(cookieSecret))
 app.use(cors());
+
 const port = process.env.PORT || 3000;
 
 const mongo_uri = 'mongodb://localhost:27017/spyfall_db';
@@ -130,7 +131,7 @@ io.on('connection', (socket) => {
     function withErrorHandling(handler) {
         return async (...args) => {
             try {
-                await handler(...args);
+                await handler(...args); //
             } catch (error) {
                 serverLog(`Error in ${handler.name}: ${error.message}`);
                 socket.emit('error', { message: `An error occurred in ${handler.name}` });
