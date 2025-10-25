@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000';
+const URL = 'http://localhost:3000';
 
 export const socket = io(URL);
 
@@ -31,7 +31,10 @@ export const spyGuessLocation = (roomCode, name, guessedLocation) => {
 
 // Functions to handle events from the server
 export const onRoomCreated = (callback) => {
-  socket.on('roomCreated', callback);
+  socket.on('roomCreated', (response) => {
+    console.log(response);
+    callback(response);
+  });
 };
 
 export const onPlayerJoined = (callback) => {

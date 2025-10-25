@@ -52,10 +52,10 @@ async function initDB() {
     }
 }
 
-function generateRoomCode() {
+function generateCode(length) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < length; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
@@ -139,68 +139,89 @@ io.on('connection', (socket) => {
         };
     }
 
-    async function getRoomAndPlayer(roomCode, socketId) {
-        const room = await Room.findOne({ roomCode });
+    async function getRoomAndPlayer(roomCode, pCode, psocketID) {
+        let room = await Room.findOne({ roomCode });
         if (!room) {
             throw new Error(`Room with code ${roomCode} not found.`);
         }
-        const player = room.players.find(p => p.socketID === socketId);
+        let player = room.players.find(p => p.playerCode === pCode);
         if (!player) {
-            throw new Error(`Player with socket ID ${socketId} not found in room ${roomCode}.`);
+            throw new Error(`Player with code ${pCode} not found in room ${roomCode}.`);
+        }
+        // room and player found, but socketID may have changed, update it
+        if (player.socketID !== psocketID) {
+            player.socketID = psocketID;
+            await Room.updateOne({ roomCode, 'players.playerCode': pCode }, { $set: { 'players.$.socketID': psocketID } });
+            //get updated room and player
+            room = await Room.findOne({ roomCode });
+            player = room.players.find(p => p.playerCode === pCode);
         }
         return { room, player };
     }
 
     //create room
-    socket.on('createRoom', withErrorHandling(async () => {
-        let newRoomCode = generateRoomCode();
+    socket.on('createRoom', withErrorHandling(async ({inputName}) => {
+        let newRoomCode = generateCode(4);
         let existingRoom = await Room.findOne({ roomCode: newRoomCode });
         while (existingRoom) {
             //if room code already exists, generate a new one
-            newRoomCode = generateRoomCode();
+            newRoomCode = generateCode(4);
             existingRoom = await Room.findOne({ roomCode: newRoomCode });
         }
         //add host as first player in room
-        let hostName = generateRoomCode(); // generate random name for host
+        let hostCode = generateCode(5); // generate random name for host
         //create room in db
         const newRoom = new Room({ 
             roomCode: newRoomCode,
-            players: [{ name: hostName, socketID: socket.id, isHost: true }], // role will be assigned later, so set to null for now
-            gameState: 'waiting',
-            location: null, // location will be set later
+            players: [{ name: inputName, playerCode: hostCode, isHost: true }],
+            //other fields will use default values
         });
-        const savedRoom = await newRoom.save(); //save newRoom to db collection
+        await newRoom.save(); //save newRoom to db collection
         socket.join(newRoomCode);//join socket.io room with room code
-        socket.emit('roomCreated', { roomCode: savedRoom.roomCode });//emit roomCreated event with room code to host client
-        serverLog(`Created new room with id: ${savedRoom._id}, and code: ${savedRoom.roomCode}`);
+        socket.emit('roomCreated', { roomCode: newRoomCode });//emit roomCreated event with room code to host client
+        serverLog(`Created new room with id: ${newRoom._id}, and code: ${newRoomCode}`);
     }));
 
     //join room
-    socket.on('joinRoom', withErrorHandling(async ({ roomCode }) => {
+    socket.on('joinRoom', withErrorHandling(async ({ inputName, roomCode }) => {
         const room = await Room.findOne({ roomCode });
         if (room) { // Room exists
-            let playerName; // generate unique name for player
+            let playerName = inputName;
             const existingNames = new Set(room.players.map(p => p.name)); // get set of existing player names in room
-            do {
-                playerName = generateRoomCode();
-            } while (existingNames.has(playerName)); // ensure name is unique in this room
+            // ensure name is unique in this room
+            while (existingNames.has(playerName)) {
+                // add (1), (2), etc. to name to make it unique
+                const baseName = playerName.replace(/ \(\d+\)$ /, '').trim(); // remove existing (d) suffix if any
+                let suffix = 1;
+                while (existingNames.has(`${baseName} (${suffix})`)) {
+                    suffix++;
+                }
+                playerName = `${nameBase} (${suffix})`;
+                
+            }
+            // generate player code
+            let playerCode = generateCode(5);
+            // make sure playerCode is unique in room
+            const existingCodes = new Set(room.players.map(p => p.playerCode));
+            while (existingCodes.has(playerCode)) {
+                playerCode = generateCode(5);
+            }
 
-            // Add player to the room
-            await Room.updateOne({ roomCode }, { $push: { players: { name: playerName, socketID: socket.id } } });
+            // Add player to the room, only returns acknowledgment
+            await Room.updateOne({ roomCode }, { $push: { players: { name: playerName, playerCode: playerCode, socketID: socket.id } } });
             // non required will be assigned later
             await room.save();
-            
             socket.join(roomCode);
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
 
             io.to(roomCode).emit('playerJoined', room.players); // Notify all clients in the room about the new player list
         } else {
-            socket.emit('roomNotFound', { message: `Room with code ${roomCode} not found.` });
+            socket.emit('roomNotFound', { message: `Room ${roomCode} not found.` });
         }
     }));
     // start game
-    socket.on('startGame', withErrorHandling(async ({ roomCode, name }) => {
-        const { room, player } = await getRoomAndPlayer(roomCode, socket.id);
+    socket.on('startGame', withErrorHandling(async ({ roomCode, playerCode }) => {
+        const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
 
         //game already started
         if (room.gameState !== 'waiting') {
@@ -214,7 +235,14 @@ io.on('connection', (socket) => {
         }
         //only host can start game
         if (player.isHost) {
-            //assign roles to players
+            // assign roles to players based on location
+            // if no location assigned yet, pick a random location
+            if (!room.location) {
+                const locationCount = await Location.countDocuments();
+                const randomIndex = Math.floor(Math.random() * locationCount);
+                const randomLocation = await Location.findOne().skip(randomIndex);
+                room.location = randomLocation._id;
+            }
             const location = await Location.findById(room.location);
             const roles = location.roles; // array of roles for this location
             const numPlayers = room.players.length;
@@ -234,7 +262,11 @@ io.on('connection', (socket) => {
             });
             room.gameState = 'in-progress';
             await room.save();
-            io.to(roomCode).emit('gameStarted', {message: "Game has started."}); // notify all players game has started
+            // calculate date time when game will end
+            const timerMilliseconds = room.gameLength * 60 * 1000;// convert minutes to milliseconds
+            const endDate = new Date(Date.now() + timerMilliseconds);
+            // notify all players game has started
+            io.to(roomCode).emit('gameStarted', {message: 'Game has started.', numSpies: numSpies, endDate: endDate}); 
             //for each player, emit their role privately
             room.players.forEach(p => {
                 io.to(p.socketID).emit('roleAssigned', { location: room.location, role: p.role });
@@ -248,7 +280,7 @@ io.on('connection', (socket) => {
                 }
                 await endedRoom.save();
                 io.to(roomCode).emit('finalVotingStarted', { message: 'Final Voting has started. Please vote to eliminate the spy.' });
-            }, room.gameLength * 60 * 1000); // convert minutes to milliseconds
+            }, timerMilliseconds); 
         } else {
             socket.emit('notAuthorized', { message: 'Only the host can start the game.' });
         }
@@ -256,7 +288,7 @@ io.on('connection', (socket) => {
 
     //player voted for someone
     socket.on('vote', withErrorHandling(async ({ roomCode, name, votedFor }) => {
-        const { room, player } = await getRoomAndPlayer(roomCode, socket.id);
+        const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
 
         //game must be in voting state to vote
         if (room.gameState !== 'voting') {
@@ -287,7 +319,7 @@ io.on('connection', (socket) => {
 
     //call for a vote
     socket.on('callVote', withErrorHandling(async ({ roomCode, name }) => {
-        const { room, player } = await getRoomAndPlayer(roomCode, socket.id);
+        const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
 
         //anyone in room can call for a vote once game is in progress
         if (room.gameState !== 'in-progress') {
@@ -350,7 +382,7 @@ io.on('connection', (socket) => {
     
     // receive spy guess location
     socket.on('spyGuessLocation', withErrorHandling(async ({ roomCode, name, guessedLocation }) => {
-        const { room, player } = await getRoomAndPlayer(roomCode, socket.id);
+        const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
 
         //spy can guess location at any game state, but if incorrect, game ends
         if (room.gameState !== 'voting' && room.gameState !== 'in-progress') {

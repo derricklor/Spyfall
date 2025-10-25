@@ -10,6 +10,7 @@ const roomSchema = new mongoose.Schema({
     },
     players: [{
         name: { type: String, required: true },
+        playerCode: { type: String, required: true },
         socketID: { type: String, required: true },
         role: { type: String, default: null },
         votedFor: { type: String, default: null },
