@@ -30,10 +30,18 @@ const roomSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    voteTimeoutID: { 
+        type: Number, 
+        default: null 
+    },
     location: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Location',
         default: null
+    },
+    gameTimeoutID: { 
+        type: Number, 
+        default: null 
     },
     gameLength: {
         type: Number,
