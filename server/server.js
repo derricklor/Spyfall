@@ -335,6 +335,8 @@ io.on('connection', (socket) => {
             });
             //set game timeout to enter final voting state after timerMilliseconds
             room.gameTimeoutID = setTimeout(finalVote, timerMilliseconds, roomCode); // last argument to pass roomCode to finalVote
+            //set game end date
+            room.gameEndDate = endDate;
             await room.save();
         } else {
             socket.emit('error', { message: 'Only the host can start the game.' });
@@ -382,6 +384,11 @@ io.on('connection', (socket) => {
         }
         //if voteOffCooldown is set and in the future, cannot call another vote yet
         if (room.voteOffCooldown && room.voteOffCooldown > new Date()) {
+            //cannot call vote if game ends within 30 seconds
+            if (room.gameEndDate && (room.gameEndDate - new Date()) < 30 * 1000) {
+                socket.emit('error', { message: 'Cannot call a vote when the game is ending soon.' });
+                return;
+            }
             const waitTime = Math.ceil((room.voteOffCooldown - new Date()) / 1000); // seconds
             socket.emit('error', { message: `You must wait ${waitTime} seconds before calling another vote.` });
             return;
@@ -415,6 +422,7 @@ io.on('connection', (socket) => {
                         const endedRoom = await Room.findOne({ roomCode });
                         if (endedRoom) {
                             io.to(roomCode).emit('annoucement', { message: `The Spy did not guess in time. Non-Spies win! The location was ${endedRoom.location.name}.` });
+                            clearTimeout(endedRoom.gameTimeoutID); //clear game timeout
                             endedRoom.gameState = 'finished';
                             await endedRoom.save();
                             io.to(roomCode).emit('annoucement', { message: 'The game has finished.' });
@@ -426,6 +434,7 @@ io.on('connection', (socket) => {
                     //reveal the spies
                     let spies = updatedRoom.players.filter(p => p.role === 'Spy').name;
                     io.to(roomCode).emit('annoucement', { message: `The eliminated player was not the Spy. The Spy was: ${spies}. The location was ${updatedRoom.location.name}.` });
+                    clearTimeout(updatedRoom.gameTimeoutID); //clear game timeout
                     updatedRoom.gameState = 'finished';
                     await updatedRoom.save();
                     io.to(roomCode).emit('annoucement', { message: 'The game has finished.' });
@@ -469,7 +478,8 @@ io.on('connection', (socket) => {
         } else {
             io.to(roomCode).emit('annoucement', { message: `The Spy has guessed correctly. Spies win! The location was ${room.location.name}. The Spy was ${spies}.` });
         }
-        io.to(roomCode).emit('annoucement', { message: 'The game has finished.' }););
+        io.to(roomCode).emit('annoucement', { message: 'The game has finished.' });
+    }));
     
     //leave room
     socket.on('disconnect', withErrorHandling(async () => {

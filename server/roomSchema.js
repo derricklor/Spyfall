@@ -48,6 +48,10 @@ const roomSchema = new mongoose.Schema({
         default: 8, // default game length in minutes
         min: 1,
         max: 60
+    },
+    gameEndDate: { 
+        type: Date,
+        default: null
     }
 });
 const Room = mongoose.model('Room', roomSchema);
