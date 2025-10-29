@@ -1,7 +1,7 @@
 import Card from './Card';
 
 // Lobby view for joining or creating a game
-const SetupCard = ({ onStartGame }) => {
+const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
     return (
         <Card title="" className="p-6 h-full flex flex-col space-y-8">
             <div className="space-y-4">
@@ -12,7 +12,7 @@ const SetupCard = ({ onStartGame }) => {
                     <input type="text" maxLength="6" placeholder="000000"
                         className="col-span-3 p-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
                     />
-                    <button onClick={onStartGame} className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md bg-blue-400" >
+                    <button onClick={onJoinRoom} className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md bg-blue-400" >
                         Join
                     </button>
                 </div>
@@ -27,7 +27,7 @@ const SetupCard = ({ onStartGame }) => {
                         className="col-span-3 p-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
                     />
 
-                    <button onClick={onStartGame}
+                    <button onClick={onCreateRoom}
                         className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md bg-blue-400" >
                         Start
                     </button>

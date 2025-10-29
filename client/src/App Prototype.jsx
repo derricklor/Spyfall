@@ -1,39 +1,17 @@
 
 import './App.css'
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+
 import Card from './components/Card';
 import SetupCard from './components/SetupCard';
 import PlayerCard from './components/PlayerCard';
 import ActionsCard from './components/ActionsCard';
 import LocationsCard from './components/LocationsCard';
-import { socket, createRoom, joinRoom, startGame, vote, callVote, spyGuessLocation} from './socket.js';
 
 // --- Main App Component ---
 const App = () => {
     const [view, setView] = useState('lobby'); // 'lobby' or 'game'
     const [isSpy, setIsSpy] = useState(false); // Toggle for role display
-    const [countdownTargetDate, setCountdownTargetDate] = useState(null);
-    const [countdownTime, setCountdownTime] = useState(0);
-    const [lobbyChat, setLobbyChat] = useState(["Welcome to the lobby!"]);
-
-    useEffect(() => {
-        const startSec = Math.floor((countdownTargetDate - new Date()) / 1000);
-        setCountdownTime(startSec);
-        const timer = setInterval(() => {
-            setCountdownTime(countdownTime - 1);
-        }, 1000);
-
-        return () => clearInterval(timer); // Cleanup on unmount
-    }, [countdownTargetDate]);
-
-    // Handle announcements from the server 
-    socket.on('announcement', (data) => {
-        //append to lobby chat
-        setLobbyChat(prev => [...prev, data.message]);
-        if (data.endDate) {
-            setCountdownTargetDate(new Date(data.endDate));
-        }
-    });
 
     const location = 'Beach';
     const role = isSpy ? 'Spy' : 'Lifeguard';
@@ -41,7 +19,6 @@ const App = () => {
     const onStartGame = () => setView('game');
     const onGoToLobby = () => setView('lobby');
     const onToggleRole = () => setIsSpy(prev => !prev);
-
 
     // The main layout for the game view
     const GameView = () => (
@@ -71,7 +48,7 @@ const App = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
                     <div className="flex flex-col">
                         <div className="flex-grow">
-                            <ActionsCard timeLeft={countdownTime}/>
+                            <ActionsCard />
                         </div>
                     </div>
                     <div className="flex-grow">
@@ -102,7 +79,7 @@ const App = () => {
                     {view === 'lobby' ? (
                         <div className="p-8 h-full flex items-center justify-center">
                             <div className="w-full max-w-md">
-                                <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} />
+                                <SetupCard onStartGame={onStartGame} />
                             </div>
                         </div>
                     ) : (

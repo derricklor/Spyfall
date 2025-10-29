@@ -1,7 +1,7 @@
 import Card from './Card';
 
 // In-game control panel (players and actions)
-const ActionsCard = () => {
+const ActionsCard = (timeLeft) => {
     const players = Array(4).fill(0).map((_, i) => ({ id: i, name: `Player ${i + 1}` }));
     // Mock data for players, replace with real data from socket
     return (
@@ -20,6 +20,7 @@ const ActionsCard = () => {
             <Card title="Actions" className="p-4">
                 <div className="space-y-3">
                     <div className="flex space-x-2">
+                        <p className="text-black">{timeLeft}</p>
                         <input
                             type="text"
                             placeholder="Suggest a question..."
