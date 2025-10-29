@@ -33,6 +33,9 @@ const App = () => {
         if (data.endDate) {
             setCountdownTargetDate(new Date(data.endDate));
         }
+        if (data.roomCode) {
+            console.log(`Joined room: ${data.roomCode}`);
+        }
     });
 
     const location = 'Beach';

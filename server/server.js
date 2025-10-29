@@ -188,7 +188,7 @@ async function finalVote(roomCode) {
 }
 
 io.on('connection', (socket) => {
-    serverLog('a user connected');
+    serverLog(`A user connected: ${socket.id}`);
 
     function withErrorHandling(handler) {
         return async (...args) => {
@@ -231,16 +231,16 @@ io.on('connection', (socket) => {
             existingRoom = await Room.findOne({ roomCode: newRoomCode });
         }
         //add host as first player in room
-        let hostCode = generateCode(5); // generate random name for host
+        let hostCode = generateCode(5); // generate random code for host
         //create room in db
         const newRoom = new Room({ 
             roomCode: newRoomCode,
-            players: [{ name: inputName, playerCode: hostCode, isHost: true }],
+            players: [{ name: inputName, playerCode: hostCode, socketID: socket.id, isHost: true }],
             //other fields will use default values
         });
         await newRoom.save(); //save newRoom to db collection
         socket.join(newRoomCode);//join socket.io room with room code
-        socket.emit('roomCreated', { roomCode: newRoomCode });//emit roomCreated event with room code to host client
+        socket.emit('announcement',  { message: `New room created id:${newRoomCode}.`, roomCode: newRoomCode});//emit annoucement event with room code to host client
         serverLog(`Created new room with id: ${newRoom._id}, and code: ${newRoomCode}`);
     }));
 
@@ -276,7 +276,7 @@ io.on('connection', (socket) => {
             socket.join(roomCode);
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
 
-            io.to(roomCode).broadcast.emit('playerJoined', room.players); // Notify all clients in the room about the new player list
+            io.to(roomCode).broadcast.emit('annoucement', { message: `${playerName} has joined.`}); // Notify all clients in the room about the new player list
         } else {
             socket.emit('error', { message: `Room ${roomCode} not found.` });
         }
@@ -483,7 +483,7 @@ io.on('connection', (socket) => {
     
     //leave room
     socket.on('disconnect', withErrorHandling(async () => {
-        serverLog(`user disconnected: ${socket.id}`);
+        serverLog(`A user disconnected: ${socket.id}`);
         //remove player from room they were in
         const room = await Room.findOne({ 'players.socketID': socket.id });
         if (room) {
@@ -509,7 +509,7 @@ async function garbageCollectRooms() {
     }
 }
 
-mongoose.connect(mongo_uri)
+const conn = mongoose.connect(mongo_uri)
     .then(() => {
         serverLog('Successfully connected to MongoDB!');
         initDB().then(() => {

@@ -23,11 +23,11 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
                     <span>Create Game</span>
                 </h3>
                 <div className="grid grid-cols-4 gap-3">
-                    <input type="text" placeholder="Your Name"
+                    <input type="text" placeholder="Your Name" id='name'
                         className="col-span-3 p-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
                     />
 
-                    <button onClick={onCreateRoom}
+                    <button onClick={()=> onCreateRoom(document.getElementById('name').value)} // anonymous function to pass name value
                         className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md bg-blue-400" >
                         Start
                     </button>

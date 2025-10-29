@@ -5,8 +5,8 @@ const URL = 'http://localhost:3000';
 export const socket = io(URL);
 
 // Functions that allow us to emit events to the server (with arguments as needed)
-export const createRoom = () => {
-    socket.emit('createRoom');
+export const createRoom = (inputName) => {
+    socket.emit('createRoom', { inputName });
 };
 
 export const joinRoom = (roomCode) => {
@@ -31,6 +31,7 @@ export const spyGuessLocation = (roomCode, name, guessedLocation) => {
 
 // Functions (binded to the socket) to handle events from the server automatically
 // on announcement handler will be created in app.jsx
+
 
 socket.on('error', (data) => {
     console.log('An error occurred. ' + data.message);
