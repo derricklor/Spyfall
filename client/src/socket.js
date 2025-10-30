@@ -9,9 +9,13 @@ export const createRoom = (inputName) => {
     socket.emit('createRoom', { inputName });
 };
 
-export const joinRoom = (roomCode) => {
-    socket.emit('joinRoom', { roomCode });
+export const joinRoom = (roomCode, inputName) => {
+    socket.emit('joinRoom', { roomCode, inputName });
 };
+
+export const leaveRoom = (roomCode, playerCode) => {
+    socket.emit('leaveRoom', { roomCode, playerCode });
+}
 
 export const startGame = (roomCode, name) => {
     socket.emit('startGame', { roomCode, name });
@@ -30,9 +34,4 @@ export const spyGuessLocation = (roomCode, name, guessedLocation) => {
 };
 
 // Functions (binded to the socket) to handle events from the server automatically
-// on announcement handler will be created in app.jsx
-
-
-socket.on('error', (data) => {
-    console.log('An error occurred. ' + data.message);
-});
+// such as socket.on announcement will be created in app.jsx

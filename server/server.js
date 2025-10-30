@@ -138,8 +138,8 @@ async function finalVote(roomCode) {
     }
     await room.save();
     const endDate = new Date(Date.now() + 60*1000); // 60 seconds from now
-    // notify all players game has started
-    io.to(roomCode).emit('annoucement', { message: 'Final Voting has started. Please vote to eliminate the spy.', endDate: endDate });
+    // notify all players final vote has started
+    io.to(roomCode).emit('voteCalled', { message: 'Final Voting has started. Please vote to eliminate the spy.', endDate: endDate });
 
     //start timeout to end voting after 60 seconds
     room.voteTimeoutID = setTimeout(async () => {
@@ -183,7 +183,7 @@ async function finalVote(roomCode) {
             await updatedRoom.save();
             io.to(roomCode).emit('annoucement', { message: 'The game has finished.' });
         }
-    }, 1 * 60 * 1000); // 60 seconds
+    }, 60 * 1000); // 60 seconds
     await room.save();
 }
 
@@ -244,8 +244,8 @@ io.on('connection', (socket) => {
         serverLog(`Created new room with id: ${newRoom._id}, and code: ${newRoomCode}`);
     }));
 
-    //join room
-    socket.on('joinRoom', withErrorHandling(async ({ inputName, roomCode }) => {
+    //player joins room
+    socket.on('joinRoom', withErrorHandling(async ({ roomCode, inputName }) => {
         const room = await Room.findOne({ roomCode });
         if (room) { // Room exists
             let playerName = inputName;
@@ -274,13 +274,27 @@ io.on('connection', (socket) => {
             // non required will be assigned later
             await room.save();
             socket.join(roomCode);
+            socket.emit('joinedRoom', { message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode }); // Notify joining client
+            io.to(roomCode).broadcast.emit('annoucement', { message: `${playerName} has joined.`}); // Notify all other clients in the room about the new player
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
-
-            io.to(roomCode).broadcast.emit('annoucement', { message: `${playerName} has joined.`}); // Notify all clients in the room about the new player list
         } else {
             socket.emit('error', { message: `Room ${roomCode} not found.` });
         }
     }));
+
+    //player leaves room
+    socket.on('leaveRoom', withErrorHandling(async ({ roomCode, playerCode }) => {
+        const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
+        //remove player from room
+        room.players = room.players.filter(p => p.playerCode !== playerCode);
+        await room.save();
+        socket.leave(roomCode);
+        socket.emit('leftRoom', { message: `You have left room: ${roomCode}.` });
+        //broadcast to other players in room
+        io.to(roomCode).emit('annoucement', {message: `${player.name} has left the room.`});
+        serverLog(`Player ${player.name} left room ${roomCode}.`);
+    }));
+
     // start game
     socket.on('startGame', withErrorHandling(async ({ roomCode, playerCode }) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
@@ -400,7 +414,7 @@ io.on('connection', (socket) => {
         
         let endDate = new Date(Date.now() + 0.5 * 60 * 1000); // 30 seconds from now
         // notify all players in room that a vote has been called
-        io.to(roomCode).emit('annoucement', { message: `${player.name} has called for a vote.`, endDate: endDate  }); 
+        io.to(roomCode).emit('voteCalled', { message: `${player.name} has called for a vote.`, endDate: endDate  }); 
         //start timeout to end voting after 30 seconds
         room.voteTimeoutID = setTimeout(async () => {
             //after timeout
@@ -503,7 +517,9 @@ async function garbageCollectRooms() {
     serverLog('Garbage collecting finished rooms...');
     try {
         const result = await Room.deleteMany({ gameState: 'finished' });
-        serverLog(`Garbage collection complete. Deleted ${result.deletedCount} finished rooms.`);
+        //delete all rooms with no players and older than 1 hour
+        const result2 = await Room.deleteMany({ $and: [ { players: { $size: 0 }}, { gameCreatedDate: { $lt: new Date(Date.now() - 1 * 60 * 60 * 1000) }} ] });
+        serverLog(`Garbage collection complete. Deleted ${result.deletedCount} finished rooms. Deleted ${result2.deletedCount} empty rooms.`);
     } catch (error) {
         serverLog(`Error during garbage collection: ${error.message}`);
     }

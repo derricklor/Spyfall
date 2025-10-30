@@ -52,6 +52,10 @@ const roomSchema = new mongoose.Schema({
     gameEndDate: { 
         type: Date,
         default: null
+    },
+    gameCreatedDate: { 
+        type: Date,
+        default: Date.now
     }
 });
 const Room = mongoose.model('Room', roomSchema);

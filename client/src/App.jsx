@@ -7,15 +7,17 @@ import PlayerCard from './components/PlayerCard';
 import ActionsCard from './components/ActionsCard';
 import LocationsCard from './components/LocationsCard';
 import { socket, createRoom, joinRoom, startGame, vote, callVote, spyGuessLocation} from './socket.js';
+import { set } from 'mongoose';
 
 // --- Main App Component ---
 const App = () => {
-    const [view, setView] = useState('lobby'); // 'lobby' or 'game'
+    const [view, setView] = useState('lobby'); // 'lobby', 'room', 'vote'
     const [isSpy, setIsSpy] = useState(false); // Toggle for role display
     const [countdownTargetDate, setCountdownTargetDate] = useState(null);
     const [countdownTime, setCountdownTime] = useState(0);
-    const [lobbyChat, setLobbyChat] = useState(["Welcome to the lobby!"]);
+    const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
 
+    // Countdown timer effect
     useEffect(() => {
         const startSec = Math.floor((countdownTargetDate - new Date()) / 1000);
         setCountdownTime(startSec);
@@ -26,16 +28,40 @@ const App = () => {
         return () => clearInterval(timer); // Cleanup on unmount
     }, [countdownTargetDate]);
 
+    // put error messages in console/popup
+    socket.on('error', (data) => {
+        console.log('An error occurred. ' + data.message);
+    });
+
     // Handle announcements from the server 
     socket.on('announcement', (data) => {
-        //append to lobby chat
-        setLobbyChat(prev => [...prev, data.message]);
-        if (data.endDate) {
-            setCountdownTargetDate(new Date(data.endDate));
-        }
-        if (data.roomCode) {
-            console.log(`Joined room: ${data.roomCode}`);
-        }
+        //append message to room chat
+        setRoomChat(prev => [...prev, data.message]);
+    });
+
+    //handle vote called from server and switch to vote view
+    socket.on('voteCalled', (data) => {
+        setView('vote');
+        setRoomChat(prev => [...prev, data.message]);
+        setCountdownTargetDate(new Date(data.endDate));
+    });
+
+    //handle joined room from server and switch to room view
+    socket.on('joinedRoom', (data) => {
+        setView('room');
+        setRoomChat(prev => [...prev, data.message]);
+        localStorage.setItem('SpyfallRoomCode', data.roomCode);
+        localStorage.setItem('SpyfallPlayerCode', data.playerCode);
+    });
+
+    //handle left room from server and switch to lobby view
+    socket.on('leftRoom', (data) => {
+        setView('lobby');
+        // clear room chat
+        setRoomChat(["Welcome to the room!"]);
+        localStorage.removeItem('SpyfallRoomCode');
+        localStorage.removeItem('SpyfallPlayerCode');
+        console.log(data.message);
     });
 
     const location = 'Beach';
