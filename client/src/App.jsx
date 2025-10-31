@@ -6,14 +6,11 @@ import SetupCard from './components/SetupCard';
 import PlayerCard from './components/PlayerCard';
 import ActionsCard from './components/ActionsCard';
 import LocationsCard from './components/LocationsCard';
-import { socket, createRoom, joinRoom, startGame, vote, callVote, spyGuessLocation} from './socket.js';
-
-
+import { socket, createRoom, joinRoom, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
 
 // --- Main App Component ---
 const App = () => {
     const [view, setView] = useState('lobby'); // 'lobby', 'room', 'in-progress','vote'
-    const [isSpy, setIsSpy] = useState(false); // Toggle for role display
 
     const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
     const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
@@ -21,6 +18,12 @@ const App = () => {
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [playerList, setPlayerList] = useState([]);
     const [playerName, setPlayerName] = useState('');
+    const [locationsArr, setLocationsArr] = useState([]);
+
+    //get locations on initial load
+    useEffect(() => {
+        getLocations();
+    }, []);
 
     // vote countdown timer effect
     useEffect(() => {
@@ -44,65 +47,85 @@ const App = () => {
         return () => clearInterval(timer); // Cleanup on unmount
     }, [gameCountdownTargetDate]);
 
-    // put error messages in console/popup
-    socket.on('error', (data) => {
-        console.log('An error occurred. ' + data.message);
-    });
+    useEffect(() => {
+        // put error messages in console/popup
+        socket.on('error', (data) => {
+            console.log('An error occurred. ' + data.message);
+        });
 
-    // Handle announcements from the server 
-    socket.on('announcement', (data) => {
-        //append message to room chat
-        setRoomChat(prev => [...prev, data.message]);
-    });
+        // Handle announcements from the server 
+        socket.on('announcement', (data) => {
+            //append message to room chat
+            setRoomChat(prev => [...prev, data.message]);
+        });
 
-    //handle vote called from server and switch to vote view
-    socket.on('voteCalled', (data) => {
-        setView('vote');
-        setRoomChat(prev => [...prev, data.message]);
-        setVoteCountdownTargetDate(new Date(data.endDate));
-    });
+        //handle locationsList from server
+        socket.on('locationsList', (data) => {
+            // store locations
 
-    //handle joined room from server and switch to room view
-    socket.on('joinedRoom', (data) => {
-        setView('room');
-        setRoomChat(prev => [...prev, data.message]);
-        localStorage.setItem('SpyfallRoomCode', data.roomCode);
-        localStorage.setItem('SpyfallPlayerCode', data.playerCode);
-        setPlayerList(data.playerList);
-    });
+            console.log('Received locations: ', data.locations);
+            setLocationsArr(data.locations); //array of objs
+        });
 
-    //handle player joined announcement and update player list
-    socket.on('playerJoined', (data) => {
-        setRoomChat(prev => [...prev, data.message]);
-        setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
-    });
+        //handle vote called from server and switch to vote view
+        socket.on('voteCalled', (data) => {
+            setView('vote');
+            setRoomChat(prev => [...prev, data.message]);
+            setVoteCountdownTargetDate(new Date(data.endDate));
+        });
 
-    //handle game started from server and switch to in-progress view
-    socket.on('gameStarted', (data) => {
-        setView('in-progress');
-        setRoomChat(prev => [...prev, data.message]);
-        setGameCountdownTargetDate(new Date(data.endDate));
-    });
+        //handle joined room from server and switch to room view
+        socket.on('joinedRoom', (data) => {
+            setView('room');
+            setRoomChat(prev => [...prev, data.message]);
+            localStorage.setItem('SpyfallRoomCode', data.roomCode);
+            localStorage.setItem('SpyfallPlayerCode', data.playerCode);
+            setPlayerList(data.playerList);
+        });
 
-    //handle reset room from server and switch to waiting view
-    socket.on('resetRoom', (data) => {
-        // clear role and location
-        setView('room');
-        setRoomChat(prev => [...prev, data.message]);
-    });
+        //handle player joined announcement and update player list
+        socket.on('playerJoined', (data) => {
+            setRoomChat(prev => [...prev, data.message]);
+            setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
+        });
 
-    //handle left room from server and switch to lobby view
-    socket.on('leftRoom', (data) => {
-        setView('lobby');
-        // clear room chat
-        setRoomChat(["Welcome to the room!"]);
-        localStorage.removeItem('SpyfallRoomCode');
-        localStorage.removeItem('SpyfallPlayerCode');
-        console.log(data.message);
-    });
+        //handle game started from server and switch to in-progress view
+        socket.on('gameStarted', (data) => {
+            setView('in-progress');
+            setRoomChat(prev => [...prev, data.message]);
+            setGameCountdownTargetDate(new Date(data.endDate));
+        });
 
-    const location = 'Beach';
-    const role = isSpy ? 'Spy' : 'Lifeguard';
+        //handle reset room from server and switch to waiting view
+        socket.on('resetRoom', (data) => {
+            // clear role and location
+            setView('room');
+            setRoomChat(prev => [...prev, data.message]);
+        });
+
+        //handle left room from server and switch to lobby view
+        socket.on('leftRoom', (data) => {
+            setView('lobby');
+            // clear room chat
+            setRoomChat(["Welcome to the room!"]);
+            localStorage.removeItem('SpyfallRoomCode');
+            localStorage.removeItem('SpyfallPlayerCode');
+            console.log(data.message);
+        });
+
+        return () => {
+            socket.off('error');
+            socket.off('announcement');
+            socket.off('locationsList');
+            socket.off('voteCalled');
+            socket.off('joinedRoom');
+            socket.off('playerJoined');
+            socket.off('gameStarted');
+            socket.off('resetRoom');
+            socket.off('leftRoom');
+        };
+    }, []);
+
 
     const onStartGame = () => setView('game');
     const onGoToLobby = () => setView('lobby');
@@ -141,7 +164,7 @@ const App = () => {
                         </div>
                     </div>
                     <div className="flex-grow">
-                        <LocationsCard />
+                        placeholder
                     </div>
                 </div>
 
@@ -151,25 +174,34 @@ const App = () => {
     );
 
     const renderView = () => {
+       
         switch(view) {
             case 'lobby':
-                return <div className="">
-                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>;
+                return <div>
+                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>
+                    <LocationsCard locationsArr={locationsArr}/>
                 </div>
             case 'room': 
-                return <div className="">
-                    <RoomView playerList={playerList} roomChat={roomChat} playerName={playerName} />;
+                return <div>
+                    <PlayerCard isSpy={isSpy} location={location} role={role} />
+                    <LocationsCard locationsArr={locationsArr}/>
                 </div>
             case 'in-progress':
-                return <div className="">
-                    <GameView />;
+                return <div>
+                    <PlayerCard isSpy={isSpy} location={location} role={role} />
+                    <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
+                    <LocationsCard locationsArr={locationsArr}/>
                 </div>
             case 'vote':
-                return <div className="">
-                    <VoteView playerList={playerList} roomChat={roomChat} countdownTime={countdownTime} vote={vote} playerName={playerName}/>;
+                return <div>
+                    <VoteView playerList={playerList} roomChat={roomChat} countdownTime={countdownTime} vote={vote} playerName={playerName}/>
+                    
                 </div>
             default:
-                return <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>;
+                return <div>
+                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>
+                    
+                </div>
         }
     };
 

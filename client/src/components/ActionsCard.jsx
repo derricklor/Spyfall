@@ -1,15 +1,16 @@
 import Card from './Card';
 
 // In-game control panel (players and actions)
-const ActionsCard = (timeLeft) => {
-    const players = Array(4).fill(0).map((_, i) => ({ id: i, name: `Player ${i + 1}` }));
+const ActionsCard = (timeLeft, playerList) => {
     // Mock data for players, replace with real data from socket
+    //const players = Array(4).fill(0).map((_, i) => ({ id: i, name: `Player ${i + 1}` }));
+    const players = playerList;
     return (
         <div className="space-y-6">
             <Card title="Players" className="p-4">
                 <ul className="space-y-2">
-                    {players.map(player => (
-                        <li key={player.id} className="flex items-center justify-between text-gray-300">
+                    {players.map((player, index) => (
+                        <li key={index} className="flex items-center justify-between text-gray-300">
                             <div className="w-1/2 h-3 bg-indigo-600 rounded-full" />
                             <span className="text-sm">{player.name}</span>
                         </li>

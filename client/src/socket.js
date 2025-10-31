@@ -33,5 +33,9 @@ export const spyGuessLocation = (roomCode, playerCode, guessedLocation) => {
     socket.emit('spyGuessLocation', { roomCode, playerCode, guessedLocation });
 };
 
+export const getLocations = () => {
+    socket.emit('getLocations');
+};
+
 // Functions (binded to the socket) to handle events from the server automatically
 // such as socket.on announcement will be created in app.jsx
