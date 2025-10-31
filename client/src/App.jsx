@@ -150,6 +150,29 @@ const App = () => {
         </div>
     );
 
+    const renderView = () => {
+        switch(view) {
+            case 'lobby':
+                return <div className="">
+                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>;
+                </div>
+            case 'room': 
+                return <div className="">
+                    <RoomView playerList={playerList} roomChat={roomChat} playerName={playerName} />;
+                </div>
+            case 'in-progress':
+                return <div className="">
+                    <GameView />;
+                </div>
+            case 'vote':
+                return <div className="">
+                    <VoteView playerList={playerList} roomChat={roomChat} countdownTime={countdownTime} vote={vote} playerName={playerName}/>;
+                </div>
+            default:
+                return <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>;
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center justify-center p-4">
             {/* Global Style and Theme Setup */}
@@ -162,22 +185,10 @@ const App = () => {
       `}</style>
 
             <main className="w-full max-w-6xl h-[90vh] flex flex-col">
-
-
                 <section className="flex-grow overflow-auto rounded-b-xl">
-                    {view === 'lobby' ? (
-                        <div className="p-8 h-full flex items-center justify-center">
-                            <div className="w-full max-w-md">
-                                <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>
-                            </div>
-                        </div>
-                    ) : (
-                        <GameView />
-                    )}
+                    {renderView()}
                 </section>
             </main>
-
-
         </div>
     );
 };
