@@ -1,7 +1,7 @@
 import Card from './Card';
 
 // Lobby view for joining or creating a game
-const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
+const SetupCard = ({ onCreateRoom, onJoinRoom, onPlayerNameChange }) => {
     return (
         <Card title="" className="p-6 h-full flex flex-col space-y-8">
             <div className="space-y-4">
@@ -23,7 +23,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
                     <span>Create Game</span>
                 </h3>
                 <div className="grid grid-cols-4 gap-3">
-                    <input type="text" placeholder="Your Name" id='name'
+                    <input type="text" placeholder="Your Name" id='name' onChange={() => onPlayerNameChange(document.getElementById('name').value)}
                         className="col-span-3 p-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
                     />
 

@@ -21,10 +21,6 @@ const roomSchema = new mongoose.Schema({
         enum: ['waiting', 'in-progress', 'voting', 'finished'],
         default: 'waiting',
     },
-    voteCount: {
-        type: Number,
-        default: 0
-    },
     voteOffCooldown: { 
         //date when voting can next occur
         type: Date,

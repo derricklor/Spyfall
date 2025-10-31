@@ -134,7 +134,6 @@ async function finalVote(roomCode) {
         //set all players' votedFor to null
         room.gameState = 'voting';
         room.players.forEach(p => p.votedFor = null);
-        room.voteCount = 0;
     }
     await room.save();
     const endDate = new Date(Date.now() + 60*1000); // 60 seconds from now
@@ -248,6 +247,12 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', withErrorHandling(async ({ roomCode, inputName }) => {
         const room = await Room.findOne({ roomCode });
         if (room) { // Room exists
+            //can only join if room is in waiting state
+            if (room.gameState !== 'waiting') {
+                socket.emit('error', { message: `Cannot join room ${roomCode} as the game is already in progress.` });
+                return;
+            }
+
             let playerName = inputName;
             const existingNames = new Set(room.players.map(p => p.name)); // get set of existing player names in room
             // ensure name is unique in this room
@@ -269,29 +274,51 @@ io.on('connection', (socket) => {
                 playerCode = generateCode(5);
             }
 
-            // Add player to the room, only returns acknowledgment
-            await Room.updateOne({ roomCode }, { $push: { players: { name: playerName, playerCode: playerCode, socketID: socket.id } } });
+            // Add player to the room, if players is empty make them host
+            if (room.players.length === 0) {
+                await Room.updateOne({ roomCode }, { $push: { players: { name: playerName, playerCode: playerCode, socketID: socket.id, isHost: true } } });
+            } else {
+                await Room.updateOne({ roomCode }, { $push: { players: { name: playerName, playerCode: playerCode, socketID: socket.id } } });
+            }
             // non required will be assigned later
             await room.save();
+            
+            const updatedRoom = await Room.findOne({ roomCode });// get latest room data
+            const playerList = updatedRoom.players.map(p => ({ name: p.name, isHost: p.isHost }));// get player list of names and who is host
             socket.join(roomCode);
-            socket.emit('joinedRoom', { message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode }); // Notify joining client
-            io.to(roomCode).broadcast.emit('annoucement', { message: `${playerName} has joined.`}); // Notify all other clients in the room about the new player
+            //emit joinedRoom event to joining player with room and player info
+            socket.emit('joinedRoom', { message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode, playerList: playerList });
+            // Notify all other clients in the room about the new player, and update their player list
+            io.to(roomCode).broadcast.emit('playerJoined', { message: `${playerName} has joined.`, playerName: playerName}); 
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
         } else {
             socket.emit('error', { message: `Room ${roomCode} not found.` });
         }
     }));
 
-    //player leaves room
+    //player voluntarily leaves room
     socket.on('leaveRoom', withErrorHandling(async ({ roomCode, playerCode }) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
+        //assign new host if host left and players remain
+        let assignNewHost = false;
+        if (player.isHost && room.players.length > 0) {
+            assignNewHost = true;
+        }
         //remove player from room
         room.players = room.players.filter(p => p.playerCode !== playerCode);
+        if (assignNewHost) {
+            room.players[0].isHost = true; // assign first player as new host
+        }
         await room.save();
         socket.leave(roomCode);
         socket.emit('leftRoom', { message: `You have left room: ${roomCode}.` });
         //broadcast to other players in room
-        io.to(roomCode).emit('annoucement', {message: `${player.name} has left the room.`});
+        assignNewHost ?
+            io.to(roomCode).emit('announcement', {message: `${player.name} has left the room. ${room.players[0].name} is the new host.`})
+            :
+            io.to(roomCode).emit('annoucement', {message: `${player.name} has left the room.`});
+        
+
         serverLog(`Player ${player.name} left room ${roomCode}.`);
     }));
 
@@ -310,7 +337,10 @@ io.on('connection', (socket) => {
             return;
         }
         //only host can start game
-        if (player.isHost) {
+        if (!player.isHost) { // player is not host
+            socket.emit('error', { message: 'Only the host can start the game.' });
+            return;
+        } else {
             // assign roles to players based on location
             // if no location assigned yet, pick a random location
             if (!room.location) {
@@ -352,8 +382,6 @@ io.on('connection', (socket) => {
             //set game end date
             room.gameEndDate = endDate;
             await room.save();
-        } else {
-            socket.emit('error', { message: 'Only the host can start the game.' });
         }
     }));
 
@@ -374,7 +402,7 @@ io.on('connection', (socket) => {
         }
         //record vote and increment vote count
         await Room.updateOne({ roomCode, 'players.name': name },
-            { $set: { 'players.$.votedFor': votedFor }, $inc: { voteCount: 1 } }); 
+            { $set: { 'players.$.votedFor': votedFor } }); 
             //.$. is positional operator to update matched array element from query
         
         await room.save();
@@ -456,7 +484,6 @@ io.on('connection', (socket) => {
             } else {
                 //no one eliminated, game resumes
                 updatedRoom.gameState = 'in-progress';
-                updatedRoom.voteCount = 0;
                 updatedRoom.voteOffCooldown = new Date(Date.now() + 1 * 60 * 1000); // set cooldown to 1 minute from end of vote
 
                 await updatedRoom.save();
@@ -495,18 +522,30 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('annoucement', { message: 'The game has finished.' });
     }));
     
-    //leave room
+    //player disconnects, treat as leaving room
     socket.on('disconnect', withErrorHandling(async () => {
         serverLog(`A user disconnected: ${socket.id}`);
-        //remove player from room they were in
         const room = await Room.findOne({ 'players.socketID': socket.id });
+        //remove player from room they were in
         if (room) {
-            const name = room.players.find(p => p.socketID === socket.id).name;
+            const player = room.players.find(p => p.socketID === socket.id);
+            //assign new host if host left and players remain
+            let assignNewHost = false;
+            if (player.isHost && room.players.length > 1) {
+                assignNewHost = true;
+            }
             //remove player from room
             room.players = room.players.filter(p => p.socketID !== socket.id);
+            if (assignNewHost) {
+                room.players[0].isHost = true; // assign first player as new host
+            }
             await room.save();
             //notify other players in room
-            io.to(room.roomCode).emit('annoucement', {message: `${name} has left the room.`});
+            assignNewHost ?
+                io.to(roomCode).emit('announcement', { message: `${player.name} has left the room. ${room.players[0].name} is the new host.` })
+                :
+                io.to(roomCode).emit('annoucement', { message: `${player.name} has left the room.` });
+            
         }
     }));
 });

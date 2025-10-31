@@ -16,6 +16,8 @@ const App = () => {
     const [countdownTargetDate, setCountdownTargetDate] = useState(null);
     const [countdownTime, setCountdownTime] = useState(0);
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
+    const [playerList, setPlayerList] = useState([]);
+    const [playerName, setPlayerName] = useState('');
 
     // Countdown timer effect
     useEffect(() => {
@@ -52,6 +54,13 @@ const App = () => {
         setRoomChat(prev => [...prev, data.message]);
         localStorage.setItem('SpyfallRoomCode', data.roomCode);
         localStorage.setItem('SpyfallPlayerCode', data.playerCode);
+        setPlayerList(data.playerList);
+    });
+
+    //handle player joined announcement and update player list
+    socket.on('playerJoined', (data) => {
+        setRoomChat(prev => [...prev, data.message]);
+        setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
     });
 
     //handle left room from server and switch to lobby view
@@ -131,7 +140,7 @@ const App = () => {
                     {view === 'lobby' ? (
                         <div className="p-8 h-full flex items-center justify-center">
                             <div className="w-full max-w-md">
-                                <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} />
+                                <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>
                             </div>
                         </div>
                     ) : (
