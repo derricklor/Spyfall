@@ -7,28 +7,42 @@ import PlayerCard from './components/PlayerCard';
 import ActionsCard from './components/ActionsCard';
 import LocationsCard from './components/LocationsCard';
 import { socket, createRoom, joinRoom, startGame, vote, callVote, spyGuessLocation} from './socket.js';
-import { set } from 'mongoose';
+
+
 
 // --- Main App Component ---
 const App = () => {
-    const [view, setView] = useState('lobby'); // 'lobby', 'room', 'vote'
+    const [view, setView] = useState('lobby'); // 'lobby', 'room', 'in-progress','vote'
     const [isSpy, setIsSpy] = useState(false); // Toggle for role display
-    const [countdownTargetDate, setCountdownTargetDate] = useState(null);
+
+    const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
+    const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
     const [countdownTime, setCountdownTime] = useState(0);
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [playerList, setPlayerList] = useState([]);
     const [playerName, setPlayerName] = useState('');
 
-    // Countdown timer effect
+    // vote countdown timer effect
     useEffect(() => {
-        const startSec = Math.floor((countdownTargetDate - new Date()) / 1000);
+        const startSec = Math.floor((voteCountdownTargetDate - new Date()) / 1000);
         setCountdownTime(startSec);
         const timer = setInterval(() => {
             setCountdownTime(countdownTime - 1);
         }, 1000);
 
         return () => clearInterval(timer); // Cleanup on unmount
-    }, [countdownTargetDate]);
+    }, [voteCountdownTargetDate]);
+
+    // game countdown timer effect
+    useEffect(() => {
+        const startSec = Math.floor((gameCountdownTargetDate - new Date()) / 1000);
+        setCountdownTime(startSec);
+        const timer = setInterval(() => {
+            setCountdownTime(countdownTime - 1);
+        }, 1000);
+
+        return () => clearInterval(timer); // Cleanup on unmount
+    }, [gameCountdownTargetDate]);
 
     // put error messages in console/popup
     socket.on('error', (data) => {
@@ -45,7 +59,7 @@ const App = () => {
     socket.on('voteCalled', (data) => {
         setView('vote');
         setRoomChat(prev => [...prev, data.message]);
-        setCountdownTargetDate(new Date(data.endDate));
+        setVoteCountdownTargetDate(new Date(data.endDate));
     });
 
     //handle joined room from server and switch to room view
@@ -61,6 +75,20 @@ const App = () => {
     socket.on('playerJoined', (data) => {
         setRoomChat(prev => [...prev, data.message]);
         setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
+    });
+
+    //handle game started from server and switch to in-progress view
+    socket.on('gameStarted', (data) => {
+        setView('in-progress');
+        setRoomChat(prev => [...prev, data.message]);
+        setGameCountdownTargetDate(new Date(data.endDate));
+    });
+
+    //handle reset room from server and switch to waiting view
+    socket.on('resetRoom', (data) => {
+        // clear role and location
+        setView('room');
+        setRoomChat(prev => [...prev, data.message]);
     });
 
     //handle left room from server and switch to lobby view

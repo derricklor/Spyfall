@@ -29,8 +29,8 @@ export const callVote = (roomCode, name) => {
     socket.emit('callVote', { roomCode, name });
 };
 
-export const spyGuessLocation = (roomCode, name, guessedLocation) => {
-    socket.emit('spyGuessLocation', { roomCode, name, guessedLocation });
+export const spyGuessLocation = (roomCode, playerCode, guessedLocation) => {
+    socket.emit('spyGuessLocation', { roomCode, playerCode, guessedLocation });
 };
 
 // Functions (binded to the socket) to handle events from the server automatically

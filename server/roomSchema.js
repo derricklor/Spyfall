@@ -18,7 +18,7 @@ const roomSchema = new mongoose.Schema({
     }],
     gameState: {
         type: String,
-        enum: ['waiting', 'in-progress', 'voting', 'finished'],
+        enum: ['waiting', 'in-progress', 'voting'],
         default: 'waiting',
     },
     voteOffCooldown: { 
