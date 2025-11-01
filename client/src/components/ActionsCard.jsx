@@ -1,18 +1,17 @@
 import Card from './Card';
 
 // In-game control panel (players and actions)
-const ActionsCard = (timeLeft, playerList) => {
+const ActionsCard = ({timeLeft, playerList}) => {
     // Mock data for players, replace with real data from socket
     //const players = Array(4).fill(0).map((_, i) => ({ id: i, name: `Player ${i + 1}` }));
-    const players = playerList;
     return (
         <div className="space-y-6">
             <Card title="Players" className="p-4">
                 <ul className="space-y-2">
-                    {players.map((player, index) => (
+                    {playerList.map((player, index) => (
                         <li key={index} className="flex items-center justify-between text-gray-300">
                             <div className="w-1/2 h-3 bg-indigo-600 rounded-full" />
-                            <span className="text-sm">{player.name}</span>
+                            <span className="text-sm">{ player.isHost ? 'Host '+ player.name : player.name}</span>
                         </li>
                     ))}
                 </ul>
@@ -31,12 +30,6 @@ const ActionsCard = (timeLeft, playerList) => {
                             Send
                         </button>
                     </div>
-                    <button className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md" >
-                        Vote
-                    </button>
-                    <button className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md" >
-                        End
-                    </button>
                 </div>
             </Card>
         </div>

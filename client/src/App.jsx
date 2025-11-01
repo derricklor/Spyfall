@@ -5,6 +5,8 @@ import Card from './components/Card';
 import SetupCard from './components/SetupCard';
 import PlayerCard from './components/PlayerCard';
 import ActionsCard from './components/ActionsCard';
+import RoomChatCard from './components/RoomChatCard';
+import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
 import { socket, createRoom, joinRoom, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
 
@@ -114,6 +116,7 @@ const App = () => {
         });
 
         return () => {
+            // Cleanup event listeners on unmount
             socket.off('error');
             socket.off('announcement');
             socket.off('locationsList');
@@ -127,20 +130,10 @@ const App = () => {
     }, []);
 
 
-    const onStartGame = () => setView('game');
-    const onGoToLobby = () => setView('lobby');
-    const onToggleRole = () => setIsSpy(prev => !prev);
-
-
     // The main layout for the game view
     const GameView = () => (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
-            <button
-                onClick={onGoToLobby}
-                className="absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white 
-                py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
-                Back to Lobby
-            </button>
+            
             <button
                 onClick={onToggleRole}
                 className="absolute top-4 right-4 bg-gray-700 hover:bg-gray-600 text-white 
@@ -177,25 +170,65 @@ const App = () => {
        
         switch(view) {
             case 'lobby':
-                return <div>
+                return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
                     <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>
                     <LocationsCard locationsArr={locationsArr}/>
                 </div>
             case 'room': 
-                return <div>
-                    <PlayerCard isSpy={isSpy} location={location} role={role} />
-                    <LocationsCard locationsArr={locationsArr}/>
+                return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
+                    <button onClick={() => {
+                            socket.emit('leaveRoom', {
+                                roomCode: localStorage.getItem('SpyfallRoomCode'),
+                                playerCode: localStorage.getItem('SpyfallPlayerCode')
+                            });
+                        }}
+                        className="absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white 
+                        py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
+                        Leave Room
+                    </button>
+                    {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
+                    <div className="lg:col-span-1 flex flex-col space-y-6">
+                        {/* <PlayerCard isSpy={isSpy} location={location} role={role} /> */}
+                        <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
+                    </div>
+                    {/* Middle Column: RoomChatHistory (middle) */}
+                    <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <RoomChatCard roomChat={roomChat}/>
+                    </div>
+                    {/* Right Column: Locations card (right) */}
+                    <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <LocationsCard locationsArr={locationsArr}/>
+                    </div>
                 </div>
             case 'in-progress':
-                return <div>
-                    <PlayerCard isSpy={isSpy} location={location} role={role} />
-                    <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
-                    <LocationsCard locationsArr={locationsArr}/>
+                return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
+                    <button onClick={() => {
+                            socket.emit('leaveRoom', {
+                                roomCode: localStorage.getItem('SpyfallRoomCode'),
+                                playerCode: localStorage.getItem('SpyfallPlayerCode')
+                            });
+                        }}
+                        className="absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white 
+                        py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
+                        Leave Room
+                    </button>
+                    {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
+                    <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <PlayerCard isSpy={isSpy} location={location} role={role} />
+                        <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
+                    </div>
+                    {/* Middle Column: RoomChatHistory (middle) */}
+                    <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <RoomChatCard roomChat={roomChat}/>
+                    </div>
+                    {/* Right Column: Locations card (right) */}
+                    <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <LocationsCard locationsArr={locationsArr}/>
+                    </div>
                 </div>
             case 'vote':
-                return <div>
-                    <VoteView playerList={playerList} roomChat={roomChat} countdownTime={countdownTime} vote={vote} playerName={playerName}/>
-                    
+                return <div className="grid grid-cols-1 gap-6 w-full h-full p-4">
+                    <VoteCard playerList={playerList} onVote={vote}/>                    
                 </div>
             default:
                 return <div>
