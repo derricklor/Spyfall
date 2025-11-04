@@ -8,7 +8,6 @@ const { Server } = require('socket.io');
 const Location = require('./locationSchema'); // constructor schema
 const Room = require('./roomSchema');
 const initLocations = require('./initLocations');
-const { clear } = require('console');
 
 
 const app = express();
@@ -223,7 +222,7 @@ io.on('connection', (socket) => {
     //handle get locations emit from client
     socket.on('getLocations', withErrorHandling(async () => {
         const locations = await Location.find({}, { name: 1}); //get only names of locations
-        socket.emit('locationsList', { locations: locations }); //send locations array to client
+        socket.emit('message', { type: 'locationsList', locations: locations }); //send locations array to client
     }));
     
     //call for a vote
@@ -319,16 +318,15 @@ io.on('connection', (socket) => {
             existingRoom = await Room.findOne({ roomCode: newRoomCode });
         }
         //add host as first player in room
-        let hostCode = generateCode(5); // generate random code for host
         //create room in db
         const newRoom = new Room({ 
-            roomCode: newRoomCode,
-            players: [{ name: inputName, playerCode: hostCode, socketID: socket.id, isHost: true }],
+            roomCode: newRoomCode
             //other fields will use default values
         });
-        await newRoom.save(); //save newRoom to db collection
+        await newRoom.save();
         socket.join(newRoomCode);//join socket.io room with room code
-        socket.emit('announcement',  { message: `New room created id:${newRoomCode}.`, roomCode: newRoomCode});//emit annoucement event with room code to host client
+        //emit annoucement event with room code to host client, client can then emit joinRoom
+        socket.emit('message',  { type: 'roomCreated', message: `New room created id:${newRoomCode}.`, roomCode: newRoomCode});
         serverLog(`Created new room with id: ${newRoom._id}, and code: ${newRoomCode}`);
     }));
 
@@ -376,9 +374,9 @@ io.on('connection', (socket) => {
             const playerList = updatedRoom.players.map(p => ({ name: p.name, isHost: p.isHost }));// get player list of names and who is host
             socket.join(roomCode);
             //emit joinedRoom event to joining player with room and player info
-            socket.emit('joinedRoom', { message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode, playerList: playerList });
+            socket.emit('message', { type: 'joinedRoom', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode, playerList: playerList });
             // Notify all other clients in the room about the new player, and update their player list
-            io.to(roomCode).broadcast.emit('playerJoined', { message: `${playerName} has joined.`, playerName: playerName}); 
+            io.to(roomCode).broadcast.emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
         } else {
             socket.emit('error', { message: `Room ${roomCode} not found.` });
@@ -578,6 +576,7 @@ const conn = mongoose.connect(mongo_uri)
         initDB().then(() => {
             server.listen(port, () => {
                 serverLog(`Server is running on port: ${port}`);
+                garbageCollectRooms(); //initial garbage collection on startup
                 setInterval(garbageCollectRooms, GARBAGE_COLLECTION_INTERVAL);
             });
         });

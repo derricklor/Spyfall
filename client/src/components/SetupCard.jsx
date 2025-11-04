@@ -1,7 +1,7 @@
 import Card from './Card';
 
 // Lobby view for joining or creating a game
-const SetupCard = ({ onCreateRoom, onJoinRoom, onPlayerNameChange }) => {
+const SetupCard = ({ onCreateRoom, onJoinRoom, onPlayerNameChange, playerName }) => {
     return (
         <Card title="" className="p-6 h-full flex flex-col space-y-8">
             <div className="space-y-4">
@@ -28,8 +28,9 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, onPlayerNameChange }) => {
                     />
 
                     <button onClick={()=> onCreateRoom(document.getElementById('name').value)} // anonymous function to pass name value
-                        className="flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md bg-blue-400" >
-                        Start
+                        className={`flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md ${!playerName ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-400 hover:bg-blue-500 hover:cursor-pointer'}`}
+                        disabled={!playerName}>
+                        Create
                     </button>
                 </div>
             </div>
@@ -38,3 +39,4 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, onPlayerNameChange }) => {
 };
 
 export default SetupCard;
+

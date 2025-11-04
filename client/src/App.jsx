@@ -17,10 +17,14 @@ const App = () => {
     const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
     const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
     const [countdownTime, setCountdownTime] = useState(0);
+
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [playerList, setPlayerList] = useState([]);
     const [playerName, setPlayerName] = useState('');
     const [locationsArr, setLocationsArr] = useState([]);
+
+    const [role, setRole] = useState(''); // player's role
+    const [location, setLocation] = useState(''); // player's location
 
     //get locations on initial load
     useEffect(() => {
@@ -49,83 +53,76 @@ const App = () => {
         return () => clearInterval(timer); // Cleanup on unmount
     }, [gameCountdownTargetDate]);
 
+    //on first mount, setup socket event listeners
     useEffect(() => {
-        // put error messages in console/popup
-        socket.on('error', (data) => {
-            console.log('An error occurred. ' + data.message);
-        });
-
-        // Handle announcements from the server 
-        socket.on('announcement', (data) => {
-            //append message to room chat
-            setRoomChat(prev => [...prev, data.message]);
-        });
-
-        //handle locationsList from server
-        socket.on('locationsList', (data) => {
-            // store locations
-
-            console.log('Received locations: ', data.locations);
-            setLocationsArr(data.locations); //array of objs
-        });
-
-        //handle vote called from server and switch to vote view
-        socket.on('voteCalled', (data) => {
-            setView('vote');
-            setRoomChat(prev => [...prev, data.message]);
-            setVoteCountdownTargetDate(new Date(data.endDate));
-        });
-
-        //handle joined room from server and switch to room view
-        socket.on('joinedRoom', (data) => {
-            setView('room');
-            setRoomChat(prev => [...prev, data.message]);
-            localStorage.setItem('SpyfallRoomCode', data.roomCode);
-            localStorage.setItem('SpyfallPlayerCode', data.playerCode);
-            setPlayerList(data.playerList);
-        });
-
-        //handle player joined announcement and update player list
-        socket.on('playerJoined', (data) => {
-            setRoomChat(prev => [...prev, data.message]);
-            setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
-        });
-
-        //handle game started from server and switch to in-progress view
-        socket.on('gameStarted', (data) => {
-            setView('in-progress');
-            setRoomChat(prev => [...prev, data.message]);
-            setGameCountdownTargetDate(new Date(data.endDate));
-        });
-
-        //handle reset room from server and switch to waiting view
-        socket.on('resetRoom', (data) => {
-            // clear role and location
-            setView('room');
-            setRoomChat(prev => [...prev, data.message]);
-        });
-
-        //handle left room from server and switch to lobby view
-        socket.on('leftRoom', (data) => {
-            setView('lobby');
-            // clear room chat
-            setRoomChat(["Welcome to the room!"]);
-            localStorage.removeItem('SpyfallRoomCode');
-            localStorage.removeItem('SpyfallPlayerCode');
-            console.log(data.message);
+        socket.on('message', (data) => {
+            switch (data.type) {
+                case 'error':
+                    console.log('An error occurred. ' + data.message);
+                    break;
+                case 'announcement':
+                    setRoomChat(prev => [...prev, data.message]);
+                    break;
+                case 'roomCreated':
+                    //get room code from server, then emit joinRoom to server
+                    setRoomChat(prev => [...prev, data.message]);
+                    localStorage.setItem('SpyfallRoomCode', data.roomCode);
+                    joinRoom(data.roomCode, playerName);
+                    break;
+                case 'roleAssigned':
+                    setRole(data.role);
+                    if (data.role === 'Spy') {
+                        setLocation('You are the Spy!');
+                    } else {
+                        setLocation(data.location);
+                    }
+                    break;
+                case 'resetRoom':
+                    setView('room');
+                    setRoomChat(prev => [...prev, data.message]);
+                    setRole('');
+                    setLocation('');
+                    break;
+                case 'locationsList':
+                    console.log('Received locations: ', data.locations);
+                    setLocationsArr(data.locations); //array of objs
+                    break;
+                case 'joinedRoom':
+                    setView('room');
+                    setRoomChat(prev => [...prev, data.message]);
+                    localStorage.setItem('SpyfallRoomCode', data.roomCode);
+                    localStorage.setItem('SpyfallPlayerCode', data.playerCode);
+                    setPlayerList(data.playerList);
+                    break;
+                    case 'playerJoined':
+                        setRoomChat(prev => [...prev, data.message]);
+                        setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
+                        break;
+                case 'voteCalled':
+                    setView('vote');
+                    setRoomChat(prev => [...prev, data.message]);
+                    setVoteCountdownTargetDate(new Date(data.endDate));
+                    break;
+                case 'gameStarted':
+                    setView('in-progress');
+                    setRoomChat(prev => [...prev, data.message]);
+                    setGameCountdownTargetDate(new Date(data.endDate));
+                    break;
+                case 'leftRoom':
+                    setView('lobby');
+                    setRoomChat(["Welcome to the room!"]);
+                    localStorage.removeItem('SpyfallRoomCode');
+                    localStorage.removeItem('SpyfallPlayerCode');
+                    console.log(data.message);
+                    break;
+                default:
+                    break;
+            }
         });
 
         return () => {
             // Cleanup event listeners on unmount
-            socket.off('error');
-            socket.off('announcement');
-            socket.off('locationsList');
-            socket.off('voteCalled');
-            socket.off('joinedRoom');
-            socket.off('playerJoined');
-            socket.off('gameStarted');
-            socket.off('resetRoom');
-            socket.off('leftRoom');
+            socket.off('message');
         };
     }, []);
 
@@ -170,9 +167,9 @@ const App = () => {
        
         switch(view) {
             case 'lobby':
-                return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
-                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>
-                    <LocationsCard locationsArr={locationsArr}/>
+                return <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4">
+                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName} playerName={playerName}/>
+                    {/* <LocationsCard locationsArr={locationsArr}/> */}
                 </div>
             case 'room': 
                 return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
@@ -232,7 +229,7 @@ const App = () => {
                 </div>
             default:
                 return <div>
-                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName}/>
+                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName} playerName={playerName}/>
                     
                 </div>
         }
