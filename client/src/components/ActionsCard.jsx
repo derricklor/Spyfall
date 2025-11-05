@@ -10,7 +10,6 @@ const ActionsCard = ({timeLeft, playerList}) => {
                 <ul className="space-y-2">
                     {playerList.map((player, index) => (
                         <li key={index} className="flex items-center justify-between text-gray-300">
-                            <div className="w-1/2 h-3 bg-indigo-600 rounded-full" />
                             <span className="text-sm">{ player.isHost ? 'Host '+ player.name : player.name}</span>
                         </li>
                     ))}

@@ -326,7 +326,7 @@ io.on('connection', (socket) => {
         await newRoom.save();
         socket.join(newRoomCode);//join socket.io room with room code
         //emit annoucement event with room code to host client, client can then emit joinRoom
-        socket.emit('message',  { type: 'roomCreated', message: `New room created id:${newRoomCode}.`, roomCode: newRoomCode});
+        socket.emit('message',  { type: 'roomCreated', message: `New room created id: ${newRoomCode}.`, roomCode: newRoomCode});
         serverLog(`Created new room with id: ${newRoom._id}, and code: ${newRoomCode}`);
     }));
 
@@ -508,7 +508,7 @@ io.on('connection', (socket) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
         //assign new host if host left and players remain
         let assignNewHost = false;
-        if (player.isHost && room.players.length > 0) {
+        if (player.isHost && room.players.length > 1) {
             assignNewHost = true;
         }
         //remove player from room
@@ -519,11 +519,12 @@ io.on('connection', (socket) => {
         await room.save();
         socket.leave(roomCode);
         socket.emit('message', { type: 'leftRoom', message: `You have left room: ${roomCode}.` });
+
         //broadcast to other players in room
         assignNewHost ?
-            io.to(roomCode).emit('message', { type: 'announcement', message: `${player.name} has left the room. ${room.players[0].name} is the new host.`})
+            io.to(roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room. ${room.players[0].name} is the new host.`, playerLeftName: player.name, newHostName: room.players[0].name })
             :
-            io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `${player.name} has left the room.`});
+            io.to(roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room.`, playerLeftName: player.name });
         
         serverLog(`Player ${player.name} left room ${roomCode}.`);
     }));
@@ -546,6 +547,7 @@ io.on('connection', (socket) => {
                 room.players[0].isHost = true; // assign first player as new host
             }
             await room.save();
+            serverLog(`Player ${player.name} disconnected and was removed from room ${room.roomCode}.`);
             //notify other players in room
             assignNewHost ?
                 io.to(roomCode).emit('message', { type: 'announcement', message: `${player.name} has left the room. ${room.players[0].name} is the new host.` })

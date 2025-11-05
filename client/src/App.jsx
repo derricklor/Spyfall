@@ -59,6 +59,7 @@ const App = () => {
             switch (data.type) {
                 case 'error':
                     console.log('An error occurred. ' + data.message);
+                    alert('An error occurred: ' + data.message);
                     break;
                 case 'announcement':
                     setRoomChat(prev => [...prev, data.message]);
@@ -84,7 +85,6 @@ const App = () => {
                     setLocation('');
                     break;
                 case 'locationsList':
-                    console.log('Received locations: ', data.locations);
                     setLocationsArr(data.locations); //array of objs
                     break;
                 case 'joinedRoom':
@@ -94,10 +94,19 @@ const App = () => {
                     localStorage.setItem('SpyfallPlayerCode', data.playerCode);
                     setPlayerList(data.playerList);
                     break;
-                    case 'playerJoined':
-                        setRoomChat(prev => [...prev, data.message]);
-                        setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
-                        break;
+                case 'playerJoined':
+                    setRoomChat(prev => [...prev, data.message]);
+                    setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
+                    break;
+                case 'playerLeftRoom':
+                    setRoomChat(prev => [...prev, data.message]);
+                    //update player list
+                    setPlayerList(prev => prev.filter(p => p.name !== data.playerLeftName));
+                    //update host status if needed
+                    if (data.newHostName) {
+                        setPlayerList(prev => prev.map(p => p.name === data.newHostName ? { ...p, isHost: true } : p));
+                    }
+                    break;
                 case 'voteCalled':
                     setView('vote');
                     setRoomChat(prev => [...prev, data.message]);
@@ -127,41 +136,6 @@ const App = () => {
     }, []);
 
 
-    // The main layout for the game view
-    const GameView = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
-            
-            <button
-                onClick={onToggleRole}
-                className="absolute top-4 right-4 bg-gray-700 hover:bg-gray-600 text-white 
-                py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
-                Toggle Role
-            </button>
-
-            {/* Left Column: Player Card (Location/Role Display) */}
-            <div className="lg:col-span-1 flex flex-col space-y-6">
-                <PlayerCard isSpy={isSpy} location={location} role={role} />
-            </div>
-
-            {/* Middle/Right Column: action card (middle) and Locations card (right) */}
-            <div className="lg:col-span-2 flex flex-col space-y-6">
-
-                {/* In-game control panel on large screens, side-by-side with locations */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                    <div className="flex flex-col">
-                        <div className="flex-grow">
-                            <ActionsCard timeLeft={countdownTime}/>
-                        </div>
-                    </div>
-                    <div className="flex-grow">
-                        placeholder
-                    </div>
-                </div>
-
-
-            </div>
-        </div>
-    );
 
     const renderView = () => {
        
@@ -178,6 +152,10 @@ const App = () => {
                                 roomCode: localStorage.getItem('SpyfallRoomCode'),
                                 playerCode: localStorage.getItem('SpyfallPlayerCode')
                             });
+                            setView("lobby");
+                            setRoomChat(["Welcome to the room!"]);
+                            localStorage.removeItem('SpyfallRoomCode');
+                            localStorage.removeItem('SpyfallPlayerCode');
                         }}
                         className="absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white 
                         py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
@@ -229,8 +207,7 @@ const App = () => {
                 </div>
             default:
                 return <div>
-                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName} playerName={playerName}/>
-                    
+                    <h1>Unknown View</h1>                    
                 </div>
         }
     };

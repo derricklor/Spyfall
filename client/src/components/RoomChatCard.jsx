@@ -6,7 +6,7 @@ const RoomChatCard = ({roomChat}) => {
             <div className="flex-grow overflow-y-auto mb-4">
                 {roomChat.map((msg, index) => (
                     <div key={index} className="mb-2">
-                        <span className="font-semibold text-gray-700">{msg}</span>
+                        <span className="font-semibold text-white">{msg}</span>
                     </div>
                 ))}
             </div>
