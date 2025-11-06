@@ -325,7 +325,7 @@ io.on('connection', (socket) => {
             //other fields will use default values
         });
         await newRoom.save();
-        socket.join(newRoomCode);//join socket.io room with room code
+        // Does not join room yet, only creates room
         //emit annoucement event with room code to host client, client can then emit joinRoom
         socket.emit('message',  { type: 'roomCreated', message: `New room created id: ${newRoomCode}.`, roomCode: newRoomCode});
         serverLog(`Created new room with id: ${newRoom._id}, and code: ${newRoomCode}`);
@@ -373,12 +373,12 @@ io.on('connection', (socket) => {
             
             const updatedRoom = await Room.findOne({ roomCode });// get latest room data
             const playerList = updatedRoom.players.map(p => ({ name: p.name, isHost: p.isHost }));// get player list of names and who is host
-            socket.join(roomCode);
+            socket.join(`${roomCode}`);//join socket.io room with room code as string
             //emit joinedRoom event to joining player with room and player info
             socket.emit('message', { type: 'joinedRoom', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode, playerList: playerList });
-            // Notify all other clients (except joining player) in the room about the joining player
-            // specifically socket.to(room), room needs to be a string or array of strings, otherwise it won't work
-            socket.to(`${roomCode}`).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 
+            // Notify all other clients in the room about the joining player
+            // specifically io.to(room), room needs to be a string or array of strings, otherwise it won't work
+            io.to(`${roomCode}`).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
         } else {
             socket.emit('message', { type: 'error', message: `Room ${roomCode} not found.` });
@@ -519,7 +519,7 @@ io.on('connection', (socket) => {
             room.players[0].isHost = true; // assign first player as new host
         }
         await room.save();
-        socket.leave(roomCode);
+        socket.leave(`${roomCode}`); // arg needs to be string
         socket.emit('message', { type: 'leftRoom', message: `You have left room: ${roomCode}.` });
 
         //broadcast to other players in room

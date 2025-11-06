@@ -87,7 +87,7 @@ const App = () => {
                 case 'locationsList':
                     setLocationsArr(data.locations); //array of objs
                     break;
-                case 'joinedRoom':
+                case 'joinedRoom': //acknowledgement of joining room
                     setView('room');
                     setRoomChat(prev => [...prev, data.message]);
                     localStorage.setItem('SpyfallRoomCode', data.roomCode);
@@ -96,7 +96,7 @@ const App = () => {
                     break;
                 case 'playerJoined':
                     setRoomChat(prev => [...prev, data.message]);
-                    setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// append new player to list
+                    setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// any player that joins cannot be host
                     break;
                 case 'playerLeftRoom':
                     setRoomChat(prev => [...prev, data.message]);
