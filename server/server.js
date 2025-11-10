@@ -138,31 +138,31 @@ async function finalVote(roomCode) {
     const endDate = new Date(Date.now() + 60*1000); // 60 seconds from now
     // notify all players final vote has started
     // specifically io.to(room), room needs to be a string or array of strings, otherwise it won't work
-    io.to(`${roomCode}`).emit('message', { type: 'voteCalled', message: 'Final Voting has started. Please vote to eliminate the spy.', endDate: endDate });
+    io.to(roomCode).emit('message', { type: 'voteCalled', message: 'Final Voting has started. Please vote to eliminate the spy.', endDate: endDate });
 
     //start timeout to end voting after 60 seconds
     room.voteTimeoutID = setTimeout(async () => {
         //get latest updated room
         const updatedRoom = await Room.findOne({ roomCode });
         
-        io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: 'The vote has ended.' }); // notify all players voting has ended
+        io.to(roomCode).emit('message', { type: 'annoucenemnt', message: 'The vote has ended.' }); // notify all players voting has ended
         
         const eliminatedPlayerName = checkVotes(updatedRoom);
         if (eliminatedPlayerName) {
-            io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `${eliminatedPlayerName} has been voted as the Spy.` });
+            io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `${eliminatedPlayerName} has been voted as the Spy.` });
             //if eliminated player is spy, they get one guess to pick location
             const elimPlayerRole = updatedRoom.players.find(p => p.name === eliminatedPlayerName).role;
             if (elimPlayerRole === 'Spy') {
-                io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.' });
+                io.to(roomCode).emit('message', { type: 'annoucenemnt', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.' });
                 //set timeout for spy to guess location in 30 seconds
                 updatedRoom.voteTimeoutID = setTimeout(async () => {
                     //if spy has not guessed yet, non-spies win
                     const endedRoom = await Room.findOne({ roomCode });
                     if (endedRoom) {
-                        io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `The Spy did not guess in time. Non-Spies win! The location was ${endedRoom.location.name}.` });
+                        io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `The Spy did not guess in time. Non-Spies win! The location was ${endedRoom.location.name}.` });
                         endedRoom.gameState = 'waiting';
                         await endedRoom.save();
-                        io.to(`${roomCode}`).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
+                        io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
                     }
                 }, 0.5 * 60 * 1000); // 30 seconds
                 await updatedRoom.save();
@@ -170,17 +170,17 @@ async function finalVote(roomCode) {
                 //non-spy eliminated, spies win
                 //reveal the spies
                 let spies = updatedRoom.players.filter(p => p.role === 'Spy').name;
-                io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `The eliminated player was not the Spy. The Spy was: ${spies}. The location was ${updatedRoom.location.name}.` });
+                io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `The eliminated player was not the Spy. The Spy was: ${spies}. The location was ${updatedRoom.location.name}.` });
                 updatedRoom.gameState = 'waiting';
                 await updatedRoom.save();
-                io.to(`${roomCode}`).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
+                io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
             }
         } else {
             //no one eliminated, spy wins
-            io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `No player was eliminated. The Spy wins! The location was ${updatedRoom.location.name}.` });
+            io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `No player was eliminated. The Spy wins! The location was ${updatedRoom.location.name}.` });
             updatedRoom.gameState = 'waiting';
             await updatedRoom.save();
-            io.to(`${roomCode}`).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
+            io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
         }
     }, 60 * 1000); // 60 seconds
     await room.save();
@@ -258,32 +258,32 @@ io.on('connection', (socket) => {
         
         let endDate = new Date(Date.now() + 0.5 * 60 * 1000); // 30 seconds from now
         // notify all players in room that a vote has been called
-        io.to(`${roomCode}`).emit('message', { type: 'voteCalled', message: `${player.name} has called for a vote.`, endDate: endDate  }); 
+        io.to(roomCode).emit('message', { type: 'voteCalled', message: `${player.name} has called for a vote.`, endDate: endDate  }); 
         //start timeout to end voting after 30 seconds
         room.voteTimeoutID = setTimeout(async () => {
             //after timeout
             const updatedRoom = await Room.findOne({ roomCode });
     
-            io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: 'The vote has ended.' }); // notify all players voting has ended
+            io.to(roomCode).emit('message', { type: 'annoucenemnt', message: 'The vote has ended.' }); // notify all players voting has ended
     
             const eliminatedPlayerName = checkVotes(updatedRoom);
             if (eliminatedPlayerName) {
-                io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `${eliminatedPlayerName} has been voted as the Spy.` });
+                io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `${eliminatedPlayerName} has been voted as the Spy.` });
                 //if eliminated player is spy, they get one guess to pick location
                 const elimPlayerRole = updatedRoom.players.find(p => p.name === eliminatedPlayerName).role;
                 if (elimPlayerRole === 'Spy') {
                     endDate = new Date(Date.now() + 0.5 * 60 * 1000); // 30 seconds from now
-                    io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.', endDate: endDate });
+                    io.to(roomCode).emit('message', { type: 'annoucenemnt', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.', endDate: endDate });
                     //set timeout for spy to guess location in 30 seconds
                     updatedRoom.voteTimeoutID = setTimeout(async () => {
                         //if spy has not guessed yet, non-spies win
                         const endedRoom = await Room.findOne({ roomCode });
                         if (endedRoom) {
-                            io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `The Spy did not guess in time. Non-Spies win! The location was ${endedRoom.location.name}.` });
+                            io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `The Spy did not guess in time. Non-Spies win! The location was ${endedRoom.location.name}.` });
                             clearTimeout(endedRoom.gameTimeoutID); //clear game timeout
                             endedRoom.gameState = 'waiting';
                             await endedRoom.save();
-                            io.to(`${roomCode}`).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
+                            io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
                         }
                     }, 0.5 * 60 * 1000); // 30 seconds
                     await updatedRoom.save();
@@ -291,11 +291,11 @@ io.on('connection', (socket) => {
                     //non-spy eliminated, spies win
                     //reveal the spies
                     let spies = updatedRoom.players.filter(p => p.role === 'Spy').name;
-                    io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `The eliminated player was not the Spy. The Spy was: ${spies}. The location was ${updatedRoom.location.name}.` });
+                    io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `The eliminated player was not the Spy. The Spy was: ${spies}. The location was ${updatedRoom.location.name}.` });
                     clearTimeout(updatedRoom.gameTimeoutID); //clear game timeout
                     updatedRoom.gameState = 'waiting';
                     await updatedRoom.save();
-                    io.to(`${roomCode}`).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
+                    io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
                 }
             } else {
                 //no one eliminated, game resumes
@@ -303,14 +303,14 @@ io.on('connection', (socket) => {
                 updatedRoom.voteOffCooldown = new Date(Date.now() + 1 * 60 * 1000); // set cooldown to 1 minute from end of vote
     
                 await updatedRoom.save();
-                io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: 'The game has resumed.' });
+                io.to(roomCode).emit('message', { type: 'annoucenemnt', message: 'The game has resumed.' });
             }
         }, 0.5 * 60 * 1000); // 30 seconds
         await room.save();
     }));
 
     //create room
-    socket.on('createRoom', withErrorHandling(async ({inputName}) => {
+    socket.on('createRoom', withErrorHandling(async ({}) => {
         let newRoomCode = generateCode(4);
         let existingRoom = await Room.findOne({ roomCode: newRoomCode });
         while (existingRoom) {
@@ -330,7 +330,7 @@ io.on('connection', (socket) => {
         socket.emit('message',  { type: 'roomCreated', message: `New room created id: ${newRoomCode}.`, roomCode: newRoomCode});
         serverLog(`Created new room with id: ${newRoom._id}, and code: ${newRoomCode}`);
     }));
-
+    
     //player joins room
     socket.on('joinRoom', withErrorHandling(async ({ roomCode, inputName }) => {
         const room = await Room.findOne({ roomCode });
@@ -340,19 +340,16 @@ io.on('connection', (socket) => {
                 socket.emit('message', { type: 'error', message: `Cannot join room ${roomCode} as the game is already in progress.` });
                 return;
             }
-
+            
             let playerName = inputName;
-            const existingNames = new Set(room.players.map(p => p.name)); // get set of existing player names in room
-            // ensure name is unique in this room
-            while (existingNames.has(playerName)) {
-                // add (1), (2), etc. to name to make it unique
-                const baseName = playerName.replace(/ \(\d+\)$ /, '').trim(); // remove existing (d) suffix if any
+            const existingNames = new Set(room.players.map(p => p.name));
+            if (existingNames.has(playerName)) {
+                const baseName = playerName.replace(/ \(\d+\)$/, '').trim();
                 let suffix = 1;
                 while (existingNames.has(`${baseName} (${suffix})`)) {
                     suffix++;
                 }
-                playerName = `${nameBase} (${suffix})`;
-                
+                playerName = `${baseName} (${suffix})`;
             }
             // generate player code
             let playerCode = generateCode(5);
@@ -361,7 +358,7 @@ io.on('connection', (socket) => {
             while (existingCodes.has(playerCode)) {
                 playerCode = generateCode(5);
             }
-
+            
             // Add player to the room, if players is empty make them host
             if (room.players.length === 0) {
                 await Room.updateOne({ roomCode }, { $push: { players: { name: playerName, playerCode: playerCode, socketID: socket.id, isHost: true } } });
@@ -373,18 +370,20 @@ io.on('connection', (socket) => {
             
             const updatedRoom = await Room.findOne({ roomCode });// get latest room data
             const playerList = updatedRoom.players.map(p => ({ name: p.name, isHost: p.isHost }));// get player list of names and who is host
-            socket.join(`${roomCode}`);//join socket.io room with room code as string
+            
+            //make sure roomCode is all caps, as case-sensitivity may cause issues in socket.io rooms
+            socket.join(roomCode.toUpperCase());//join socket.io room with room code as string
             //emit joinedRoom event to joining player with room and player info
             socket.emit('message', { type: 'joinedRoom', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode, playerList: playerList });
             // Notify all other clients in the room about the joining player
-            // specifically io.to(room), room needs to be a string or array of strings, otherwise it won't work
-            io.to(`${roomCode}`).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 
+            // specifically socket.to(room), sends to all sockets in room except sender
+            socket.to(roomCode).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
         } else {
             socket.emit('message', { type: 'error', message: `Room ${roomCode} not found.` });
         }
     }));
-
+    
     
 
     // start game
@@ -437,7 +436,7 @@ io.on('connection', (socket) => {
             const timerMilliseconds = room.gameLength * 60 * 1000;// convert minutes to milliseconds
             const endDate = new Date(Date.now() + timerMilliseconds);
             // notify all players game has started
-            io.to(`${roomCode}`).emit('message', { type: 'gameStarted', message: 'Game has started.', endDate: endDate}); 
+            io.to(roomCode).emit('message', { type: 'gameStarted', message: 'Game has started.', endDate: endDate}); 
             //for each player, emit their role privately
             room.players.forEach(p => {
                 io.to(p.socketID).emit('message', { type: 'roleAssigned', location: room.location, role: p.role });
@@ -472,7 +471,7 @@ io.on('connection', (socket) => {
         
         await room.save();
 
-        //io.to(`${roomCode}`).emit('playerVoted', updatedRoom.players); // notify all players in room of updated player list with votes
+        //io.to(roomCode).emit('playerVoted', updatedRoom.players); // notify all players in room of updated player list with votes
     }));
 
     
@@ -498,11 +497,11 @@ io.on('connection', (socket) => {
         let spies = room.players.filter(p => p.role === 'Spy').name;
         //check guessedLocation is valid
         room.location !== guessedLocation ?
-            io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `The Spy has guessed incorrectly. Non-Spies win! The location was ${room.location.name}. The Spy was ${spies}.` })
+            io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `The Spy has guessed incorrectly. Non-Spies win! The location was ${room.location.name}. The Spy was ${spies}.` })
             :
-            io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `The Spy has guessed correctly. Spies win! The location was ${room.location.name}. The Spy was ${spies}.` });
+            io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `The Spy has guessed correctly. Spies win! The location was ${room.location.name}. The Spy was ${spies}.` });
         // fall through to reset game
-        io.to(`${roomCode}`).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
+        io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
     }));
 
     //player voluntarily leaves room
@@ -513,20 +512,20 @@ io.on('connection', (socket) => {
         if (player.isHost && room.players.length > 1) {
             assignNewHost = true;
         }
-        //remove player from room
-        room.players = room.players.filter(p => p.playerCode !== playerCode);
+        //remove player from room by filtering out their socketID, allows for multiple connections per browser
+        room.players = room.players.filter(p => p.socketID !== socket.id);
         if (assignNewHost) {
             room.players[0].isHost = true; // assign first player as new host
         }
         await room.save();
-        socket.leave(`${roomCode}`); // arg needs to be string
+        socket.leave(roomCode.toUpperCase()); // arg needs to be string, case sensitivity matters
         socket.emit('message', { type: 'leftRoom', message: `You have left room: ${roomCode}.` });
 
         //broadcast to other players in room
         assignNewHost ?
-            io.to(`${roomCode}`).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room. ${room.players[0].name} is the new host.`, playerLeftName: player.name, newHostName: room.players[0].name })
+            io.to(roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room. ${room.players[0].name} is the new host.`, playerLeftName: player.name, newHostName: room.players[0].name })
             :
-            io.to(`${roomCode}`).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room.`, playerLeftName: player.name });
+            io.to(roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room.`, playerLeftName: player.name });
         
         serverLog(`Player ${player.name} left room ${roomCode}.`);
     }));
@@ -552,9 +551,9 @@ io.on('connection', (socket) => {
             serverLog(`Player ${player.name} disconnected and was removed from room ${room.roomCode}.`);
             //notify other players in room
             assignNewHost ?
-                io.to(`${roomCode}`).emit('message', { type: 'announcement', message: `${player.name} has left the room. ${room.players[0].name} is the new host.` })
+                io.to(roomCode).emit('message', { type: 'announcement', message: `${player.name} has left the room. ${room.players[0].name} is the new host.` })
                 :
-                io.to(`${roomCode}`).emit('message', { type: 'annoucenemnt', message: `${player.name} has left the room.` });
+                io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `${player.name} has left the room.` });
             
         }
     }));

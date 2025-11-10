@@ -5,8 +5,8 @@ const URL = 'http://localhost:3000';
 export const socket = io(URL);
 
 // Functions that allow us to emit events to the server (with arguments as needed)
-export const createRoom = (inputName) => {
-    socket.emit('createRoom', { inputName });
+export const createRoom = () => {
+    socket.emit('createRoom', {});
 };
 
 export const joinRoom = (roomCode, inputName) => {

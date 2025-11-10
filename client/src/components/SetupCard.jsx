@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from './Card';
 
 // Lobby view for joining or creating a game
-const SetupCard = ({ onCreateRoom, onJoinRoom, onPlayerNameChange, playerName }) => {
+const SetupCard = ({ onCreateRoom, onJoinRoom, setPlayerName, playerName }) => {
     const [joinCode, setJoinCode] = useState('');
 
     return (
@@ -13,7 +13,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, onPlayerNameChange, playerName })
                 </h3>
                 <input type="text" placeholder="Your Name" id='name'
                     value={playerName}
-                    onChange={(e) => onPlayerNameChange(e.target.value)}
+                    onChange={(e) => setPlayerName(e.target.value)}
                     className="col-span-3 p-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
                 />
             </div>
@@ -43,7 +43,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, onPlayerNameChange, playerName })
                     <span>Create Game</span>
                 </h3>
                 <div className="grid grid-cols-4 gap-3">
-                    <button onClick={()=> onCreateRoom(playerName)} // anonymous function to pass name value
+                    <button onClick={()=> onCreateRoom()} // anonymous function to pass name value
                         className={`flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md ${!playerName ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-400 hover:bg-blue-500 hover:cursor-pointer'}`}
                         disabled={!playerName}>
                         Create

@@ -1,6 +1,6 @@
 
 import './App.css'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Card from './components/Card';
 import SetupCard from './components/SetupCard';
 import PlayerCard from './components/PlayerCard';
@@ -25,6 +25,11 @@ const App = () => {
 
     const [role, setRole] = useState(''); // player's role
     const [location, setLocation] = useState(''); // player's location
+    const playerNameRef = useRef(playerName);
+
+    useEffect(() => {
+        playerNameRef.current = playerName;
+    }, [playerName]);
 
     //get locations on initial load
     useEffect(() => {
@@ -68,7 +73,7 @@ const App = () => {
                     //get room code from server, then emit joinRoom to server
                     setRoomChat(prev => [...prev, data.message]);
                     localStorage.setItem('SpyfallRoomCode', data.roomCode);
-                    joinRoom(data.roomCode, playerName);
+                    joinRoom(data.roomCode, playerNameRef.current);
                     break;
                 case 'roleAssigned':
                     setRole(data.role);
@@ -142,7 +147,7 @@ const App = () => {
         switch(view) {
             case 'lobby':
                 return <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4">
-                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} onPlayerNameChange={setPlayerName} playerName={playerName}/>
+                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} setPlayerName={setPlayerName} playerName={playerName}/>
                     {/* <LocationsCard locationsArr={locationsArr}/> */}
                 </div>
             case 'room': 
