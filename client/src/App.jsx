@@ -1,6 +1,6 @@
 
 import './App.css'
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import Card from './components/Card';
 import SetupCard from './components/SetupCard';
 import PlayerCard from './components/PlayerCard';
@@ -8,7 +8,7 @@ import ActionsCard from './components/ActionsCard';
 import RoomChatCard from './components/RoomChatCard';
 import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
-import { socket, createRoom, joinRoom, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
+import { socket, createRoom, joinRoom, sendChatMessage, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
 
 // --- Main App Component ---
 const App = () => {
@@ -19,13 +19,17 @@ const App = () => {
     const [countdownTime, setCountdownTime] = useState(0);
 
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
-    const [playerList, setPlayerList] = useState([]);
-    const [playerName, setPlayerName] = useState('');
     const [locationsArr, setLocationsArr] = useState([]);
+    const [playerList, setPlayerList] = useState([]);
 
+    const [playerName, setPlayerName] = useState('');
+    const [playerCode, setPlayerCode] = useState('');
+    const [roomCode, setRoomCode] = useState('');
     const [role, setRole] = useState(''); // player's role
     const [location, setLocation] = useState(''); // player's location
     const playerNameRef = useRef(playerName);
+
+    const PlayerContext = React.createContext();
 
     useEffect(() => {
         playerNameRef.current = playerName;
@@ -78,7 +82,7 @@ const App = () => {
                 case 'roleAssigned':
                     setRole(data.role);
                     if (data.role === 'Spy') {
-                        setLocation('You are the Spy!');
+                        setLocation('Unknown');
                     } else {
                         setLocation(data.location);
                     }
@@ -152,33 +156,36 @@ const App = () => {
                 </div>
             case 'room': 
                 return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
-                    <button onClick={() => {
-                            socket.emit('leaveRoom', {
-                                roomCode: localStorage.getItem('SpyfallRoomCode'),
-                                playerCode: localStorage.getItem('SpyfallPlayerCode')
-                            });
-                            setView("lobby");
-                            setRoomChat(["Welcome to the room!"]);
-                            localStorage.removeItem('SpyfallRoomCode');
-                            localStorage.removeItem('SpyfallPlayerCode');
-                        }}
-                        className="absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white 
-                        py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
-                        Leave Room
-                    </button>
-                    {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
-                    <div className="lg:col-span-1 flex flex-col space-y-6">
-                        {/* <PlayerCard isSpy={isSpy} location={location} role={role} /> */}
-                        <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
-                    </div>
-                    {/* Middle Column: RoomChatHistory (middle) */}
-                    <div className="lg:col-span-1 flex flex-col space-y-6">
-                        <RoomChatCard roomChat={roomChat}/>
-                    </div>
-                    {/* Right Column: Locations card (right) */}
-                    <div className="lg:col-span-1 flex flex-col space-y-6">
-                        <LocationsCard locationsArr={locationsArr}/>
-                    </div>
+                    <PlayerContext.Provider value={{roomCode, playerName}}>
+
+                        <button onClick={() => {
+                                socket.emit('leaveRoom', {
+                                    roomCode: localStorage.getItem('SpyfallRoomCode'),
+                                    playerCode: localStorage.getItem('SpyfallPlayerCode')
+                                });
+                                setView("lobby");
+                                setRoomChat(["Welcome to the room!"]);
+                                localStorage.removeItem('SpyfallRoomCode');
+                                localStorage.removeItem('SpyfallPlayerCode');
+                            }}
+                            className="absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white 
+                            py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
+                            Leave Room
+                        </button>
+                        {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
+                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                            {/* <PlayerCard isSpy={isSpy} location={location} role={role} /> */}
+                            <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
+                        </div>
+                        {/* Middle Column: RoomChatHistory (middle) */}
+                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                            <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
+                        </div>
+                        {/* Right Column: Locations card (right) */}
+                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                            <LocationsCard locationsArr={locationsArr}/>
+                        </div>
+                    </PlayerContext.Provider>
                 </div>
             case 'in-progress':
                 return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">

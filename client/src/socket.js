@@ -9,6 +9,10 @@ export const createRoom = () => {
     socket.emit('createRoom', {});
 };
 
+export const sendChatMessage = (roomCode, name, message) => {
+    socket.emit('chatMessage', { roomCode, name, message });
+}
+
 export const joinRoom = (roomCode, inputName) => {
     socket.emit('joinRoom', { roomCode, inputName });
 };

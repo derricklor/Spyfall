@@ -201,20 +201,21 @@ io.on('connection', (socket) => {
     }
     
     async function getRoomAndPlayer(roomCode, pCode, psocketID) {
-        let room = await Room.findOne({ roomCode });
+        const roomCodeUpper = roomCode.toUpperCase();
+        let room = await Room.findOne({ roomCodeUpper });
         if (!room) {
-            throw new Error(`Room with code ${roomCode} not found.`);
+            throw new Error(`Room with code ${roomCodeUpper} not found.`);
         }
         let player = room.players.find(p => p.playerCode === pCode);
         if (!player) {
-            throw new Error(`Player with code ${pCode} not found in room ${roomCode}.`);
+            throw new Error(`Player with code ${pCode} not found in room ${roomCodeUpper}.`);
         }
         // room and player found, but socketID may have changed, update it
         if (player.socketID !== psocketID) {
             player.socketID = psocketID;
-            await Room.updateOne({ roomCode, 'players.playerCode': pCode }, { $set: { 'players.$.socketID': psocketID } });
+            await Room.updateOne({ roomCodeUpper, 'players.playerCode': pCode }, { $set: { 'players.$.socketID': psocketID } });
             //get updated room and player
-            room = await Room.findOne({ roomCode });
+            room = await Room.findOne({ roomCodeUpper });
             player = room.players.find(p => p.playerCode === pCode);
         }
         return { room, player };
@@ -389,7 +390,6 @@ io.on('connection', (socket) => {
     // start game
     socket.on('startGame', withErrorHandling(async ({ roomCode, playerCode }) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
-
         //game already started
         if (room.gameState !== 'waiting') {
             socket.emit('message', { type: 'error', message: 'Game has already started.' });
@@ -452,7 +452,6 @@ io.on('connection', (socket) => {
     //player voted for someone
     socket.on('vote', withErrorHandling(async ({ roomCode, name, votedFor }) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
-
         //game must be in voting state to vote
         if (room.gameState !== 'voting') {
             socket.emit('message', { type: 'error', message: 'Game is not in voting state.' });
@@ -478,7 +477,6 @@ io.on('connection', (socket) => {
     // receive spy guess location
     socket.on('spyGuessLocation', withErrorHandling(async ({ roomCode, playerCode, guessedLocation }) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
-
         //check player is the spy
         if (player.role !== 'Spy') {
             socket.emit('message', { type: 'error', message: 'Only the Spy can guess the location.' });
@@ -518,7 +516,7 @@ io.on('connection', (socket) => {
             room.players[0].isHost = true; // assign first player as new host
         }
         await room.save();
-        socket.leave(roomCode.toUpperCase()); // arg needs to be string, case sensitivity matters
+        socket.leave(roomCode); // arg needs to be string, case sensitivity matters
         socket.emit('message', { type: 'leftRoom', message: `You have left room: ${roomCode}.` });
 
         //broadcast to other players in room
@@ -549,7 +547,7 @@ io.on('connection', (socket) => {
             }
             await room.save();
             serverLog(`Player ${player.name} disconnected and was removed from room ${room.roomCode}.`);
-            //notify other players in room
+            //notify all other players in room
             assignNewHost ?
                 io.to(roomCode).emit('message', { type: 'announcement', message: `${player.name} has left the room. ${room.players[0].name} is the new host.` })
                 :

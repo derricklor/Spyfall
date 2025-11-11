@@ -25,7 +25,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, setPlayerName, playerName }) => {
                 <div className="grid grid-cols-4 gap-3">
                     <input type="text" maxLength="4" placeholder="0000" id='joinCode'
                         value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value)}
+                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                         className="col-span-3 p-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
                     />
                     <button onClick={()=> {onJoinRoom(joinCode, playerName);
