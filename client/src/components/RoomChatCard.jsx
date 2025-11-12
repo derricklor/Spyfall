@@ -1,9 +1,9 @@
 import Card from './Card';
 import { React, useContext } from 'react';
-import { PlayerContext } from '../App';
+import PlayerContext from '../contexts/PlayerContext';
 
 const RoomChatCard = ({roomChat, sendChatMessage}) => {
-    const { roomCode, playerName } = useContext(PlayerContext);
+    const { roomCode, playerName } = useContext(PlayerContext); // break context object into variables
 
     // function to handle sending chat message on enter key press
     const handleKeyPress = (e) => {
@@ -14,7 +14,7 @@ const RoomChatCard = ({roomChat, sendChatMessage}) => {
     };
 
     return (
-        <Card title="Room Chat" className="p-4 max-h-1/2 h-fit flex flex-col">
+        <Card title="Room Chat" className="p-4 h-fit flex flex-col">
             <div className="flex-grow overflow-y-auto mb-4">
                 {roomChat.map((msg, index) => (
                     <div key={index} className="mb-2">

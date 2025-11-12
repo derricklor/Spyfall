@@ -1,13 +1,15 @@
 
 import './App.css'
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import Card from './components/Card';
+import PlayerContext from './contexts/PlayerContext'; // object context for player info, holds getters and setters
+
 import SetupCard from './components/SetupCard';
 import PlayerCard from './components/PlayerCard';
 import ActionsCard from './components/ActionsCard';
 import RoomChatCard from './components/RoomChatCard';
 import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
+
 import { socket, createRoom, joinRoom, sendChatMessage, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
 
 // --- Main App Component ---
@@ -29,7 +31,6 @@ const App = () => {
     const [location, setLocation] = useState(''); // player's location
     const playerNameRef = useRef(playerName);
 
-    const PlayerContext = React.createContext();
 
     useEffect(() => {
         playerNameRef.current = playerName;
@@ -151,8 +152,9 @@ const App = () => {
         switch(view) {
             case 'lobby':
                 return <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4">
-                    <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} setPlayerName={setPlayerName} playerName={playerName}/>
-                    {/* <LocationsCard locationsArr={locationsArr}/> */}
+                    <PlayerContext.Provider value={{ playerName, setPlayerName,  roomCode, setRoomCode }}> {/*pass as object */}
+                        <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} />
+                    </PlayerContext.Provider>
                 </div>
             case 'room': 
                 return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
