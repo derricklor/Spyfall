@@ -201,10 +201,9 @@ io.on('connection', (socket) => {
     }
     
     async function getRoomAndPlayer(roomCode, pCode, psocketID) {
-        const roomCodeUpper = roomCode.toUpperCase();
-        let room = await Room.findOne({ roomCodeUpper });
+        let room = await Room.findOne({ roomCode });
         if (!room) {
-            throw new Error(`Room with code ${roomCodeUpper} not found.`);
+            throw new Error(`Room with code ${roomCode} not found.`);
         }
         let player = room.players.find(p => p.playerCode === pCode);
         if (!player) {
@@ -213,9 +212,9 @@ io.on('connection', (socket) => {
         // room and player found, but socketID may have changed, update it
         if (player.socketID !== psocketID) {
             player.socketID = psocketID;
-            await Room.updateOne({ roomCodeUpper, 'players.playerCode': pCode }, { $set: { 'players.$.socketID': psocketID } });
+            await Room.updateOne({ roomCode, 'players.playerCode': pCode }, { $set: { 'players.$.socketID': psocketID } });
             //get updated room and player
-            room = await Room.findOne({ roomCodeUpper });
+            room = await Room.findOne({ roomCode });
             player = room.players.find(p => p.playerCode === pCode);
         }
         return { room, player };

@@ -10,7 +10,7 @@ import RoomChatCard from './components/RoomChatCard';
 import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
 
-import { socket, createRoom, joinRoom, sendChatMessage, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
+import { socket, createRoom, joinRoom, leaveRoom, sendChatMessage, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
 
 // --- Main App Component ---
 const App = () => {
@@ -77,7 +77,7 @@ const App = () => {
                 case 'roomCreated':
                     //get room code from server, then emit joinRoom to server
                     setRoomChat(prev => [...prev, data.message]);
-                    localStorage.setItem('SpyfallRoomCode', data.roomCode);
+                    setRoomCode(data.roomCode);
                     joinRoom(data.roomCode, playerNameRef.current);
                     break;
                 case 'roleAssigned':
@@ -100,8 +100,8 @@ const App = () => {
                 case 'joinedRoom': //acknowledgement of joining room
                     setView('room');
                     setRoomChat(prev => [...prev, data.message]);
-                    localStorage.setItem('SpyfallRoomCode', data.roomCode);
-                    localStorage.setItem('SpyfallPlayerCode', data.playerCode);
+                    setRoomCode(data.roomCode);
+                    setPlayerCode(data.playerCode);
                     setPlayerList(data.playerList);
                     break;
                 case 'playerJoined':
@@ -130,8 +130,6 @@ const App = () => {
                 case 'leftRoom':
                     setView('lobby');
                     setRoomChat(["Welcome to the room!"]);
-                    localStorage.removeItem('SpyfallRoomCode');
-                    localStorage.removeItem('SpyfallPlayerCode');
                     console.log(data.message);
                     break;
                 default:
@@ -159,17 +157,9 @@ const App = () => {
             case 'room': 
                 return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
                     <PlayerContext.Provider value={{roomCode, playerName}}>
-
-                        <button onClick={() => {
-                                socket.emit('leaveRoom', {
-                                    roomCode: localStorage.getItem('SpyfallRoomCode'),
-                                    playerCode: localStorage.getItem('SpyfallPlayerCode')
-                                });
-                                setView("lobby");
-                                setRoomChat(["Welcome to the room!"]);
-                                localStorage.removeItem('SpyfallRoomCode');
-                                localStorage.removeItem('SpyfallPlayerCode');
-                            }}
+                        <button onClick={() => {leaveRoom(roomCode, playerCode);
+                            console.log(`[DEBUG] Leaving room ${roomCode} as ${playerName}`);
+                        }} // wait for leftRoom handler to get response
                             className="absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white 
                             py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
                             Leave Room
