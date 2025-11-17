@@ -1,14 +1,12 @@
 import Card from './Card';
 import { React, useContext } from 'react';
-import PlayerContext from '../contexts/PlayerContext';
 
 const RoomChatCard = ({roomChat, sendChatMessage}) => {
-    const { roomCode, playerName } = useContext(PlayerContext); // break context object into variables
 
     // function to handle sending chat message on enter key press
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && e.target.value.trim() !== '') {
-            sendChatMessage(roomCode, playerName, e.target.value.trim());
+            sendChatMessage(e.target.value.trim());
             e.target.value = ''; // clear input field
         }
     };
@@ -21,7 +19,7 @@ const RoomChatCard = ({roomChat, sendChatMessage}) => {
                         <span className="font-semibold text-white">{msg}</span>
                     </div>
                 ))}
-                <input type="text" className="font-semibold text-white border-2 border-gray-500 rounded-l" placeholder='...'
+                <input type="text" className="font-semibold text-white border-2 border-gray-500 rounded-l " placeholder='...'
                     onKeyDown={handleKeyPress} />
             </div>
 

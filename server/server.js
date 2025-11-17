@@ -192,10 +192,16 @@ io.on('connection', (socket) => {
     function withErrorHandling(handler) {
         return async (...args) => {
             try {
-                await handler(...args); //
-            } catch (error) {
-                serverLog(`Error in ${handler.name}: ${error.message}`);
-                socket.emit('message', { type: 'error', message: `An error occurred in ${handler.name}` });
+                await handler(...args); //run the handler with any provided args
+            } catch (error) { //catch any errors
+                serverLog(`Error in ${handler}: ${error.message}`);
+                socket.emit('message', { type: 'error', message: `An error occurred in ${handler}` });
+                if (args.length > 0) {
+                    const lastArg = args[args.length - 1];
+                    if (typeof lastArg === 'function') {
+                        lastArg({ status: 'error'}); //send error acknowledgement if callback provided
+                    }
+                }
             }
         };
     }
@@ -224,6 +230,17 @@ io.on('connection', (socket) => {
     socket.on('getLocations', withErrorHandling(async () => {
         const locations = await Location.find({}, { name: 1}); //get only names of locations
         socket.emit('message', { type: 'locationsList', locations: locations }); //send locations array to client
+    }));
+
+    //handle chat message from room
+    socket.on('chatMessage', withErrorHandling(async ({roomCode, playerCode, message}, callback) => {
+        //check if roomCode and player exists
+        
+        const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
+        //emit to everyone in room except sender, use generic annoucement type
+        socket.to(roomCode).emit('message', { type: 'announcement', message: `${player.name}: ${message}`});
+        //send callback acknowledgement success or error
+        callback({status: 'success'});
     }));
     
     //call for a vote
@@ -371,8 +388,7 @@ io.on('connection', (socket) => {
             const updatedRoom = await Room.findOne({ roomCode });// get latest room data
             const playerList = updatedRoom.players.map(p => ({ name: p.name, isHost: p.isHost }));// get player list of names and who is host
             
-            //make sure roomCode is all caps, as case-sensitivity may cause issues in socket.io rooms
-            socket.join(roomCode.toUpperCase());//join socket.io room with room code as string
+            socket.join(roomCode);//join socket.io room with room code as string
             //emit joinedRoom event to joining player with room and player info
             socket.emit('message', { type: 'joinedRoom', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode, playerList: playerList });
             // Notify all other clients in the room about the joining player
@@ -448,8 +464,9 @@ io.on('connection', (socket) => {
         }
     }));
 
+
     //player voted for someone
-    socket.on('vote', withErrorHandling(async ({ roomCode, name, votedFor }) => {
+    socket.on('vote', withErrorHandling(async ({ roomCode, playerCode, votedFor }) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
         //game must be in voting state to vote
         if (room.gameState !== 'voting') {
@@ -530,6 +547,7 @@ io.on('connection', (socket) => {
     //player disconnects, treat as leaving room
     socket.on('disconnect', withErrorHandling(async () => {
         serverLog(`A user disconnected: ${socket.id}`);
+        //find room and player by socket id
         const room = await Room.findOne({ 'players.socketID': socket.id });
         //remove player from room they were in
         if (room) {
@@ -548,9 +566,9 @@ io.on('connection', (socket) => {
             serverLog(`Player ${player.name} disconnected and was removed from room ${room.roomCode}.`);
             //notify all other players in room
             assignNewHost ?
-                io.to(roomCode).emit('message', { type: 'announcement', message: `${player.name} has left the room. ${room.players[0].name} is the new host.` })
+                io.to(room.roomCode).emit('message', { type: 'announcement', message: `${player.name} has left the room. ${room.players[0].name} is the new host.` })
                 :
-                io.to(roomCode).emit('message', { type: 'annoucenemnt', message: `${player.name} has left the room.` });
+                io.to(room.roomCode).emit('message', { type: 'annoucenemnt', message: `${player.name} has left the room.` });
             
         }
     }));

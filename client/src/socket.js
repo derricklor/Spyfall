@@ -9,9 +9,8 @@ export const createRoom = () => {
     socket.emit('createRoom', {});
 };
 
-export const sendChatMessage = (roomCode, name, message) => {
-    socket.emit('chatMessage', { roomCode, name, message });
-}
+//sendChatMessage function moved to app.jsx for easier callback handling
+
 
 export const joinRoom = (roomCode, inputName) => {
     socket.emit('joinRoom', { roomCode, inputName });
@@ -25,8 +24,8 @@ export const startGame = (roomCode, name) => {
     socket.emit('startGame', { roomCode, name });
 };
 
-export const vote = (roomCode, name, votedFor) => {
-    socket.emit('vote', { roomCode, name, votedFor });
+export const vote = (roomCode, playerCode, votedFor) => {
+    socket.emit('vote', { roomCode, playerCode, votedFor });
 };
 
 export const callVote = (roomCode, name) => {

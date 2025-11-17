@@ -10,7 +10,7 @@ import RoomChatCard from './components/RoomChatCard';
 import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
 
-import { socket, createRoom, joinRoom, leaveRoom, sendChatMessage, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
+import { socket, createRoom, joinRoom, leaveRoom, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
 
 // --- Main App Component ---
 const App = () => {
@@ -30,6 +30,17 @@ const App = () => {
     const [role, setRole] = useState(''); // player's role
     const [location, setLocation] = useState(''); // player's location
     const playerNameRef = useRef(playerName);
+
+    const sendChatMessage = (message) => {
+        socket.emit('chatMessage', { roomCode, playerCode, message }, response => {
+            if (response.status !== 'success') {
+                // mark message as failed to send
+                setRoomChat(prev => [...prev, "*Error sending previous message*"]);
+            } else {// else success and update roomchat
+                setRoomChat(prev => [...prev, playerNameRef.current + ": " + message]);
+            }
+        });
+    }
 
 
     useEffect(() => {
@@ -164,16 +175,16 @@ const App = () => {
                             py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
                             Leave Room
                         </button>
-                        {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
+                            {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
                         <div className="lg:col-span-1 flex flex-col space-y-6">
                             {/* <PlayerCard isSpy={isSpy} location={location} role={role} /> */}
                             <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
                         </div>
-                        {/* Middle Column: RoomChatHistory (middle) */}
+                            {/* Middle Column: RoomChatHistory (middle) */}
                         <div className="lg:col-span-1 flex flex-col space-y-6">
                             <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
                         </div>
-                        {/* Right Column: Locations card (right) */}
+                            {/* Right Column: Locations card (right) */}
                         <div className="lg:col-span-1 flex flex-col space-y-6">
                             <LocationsCard locationsArr={locationsArr}/>
                         </div>
@@ -191,16 +202,16 @@ const App = () => {
                         py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
                         Leave Room
                     </button>
-                    {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
+                        {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
                     <div className="lg:col-span-1 flex flex-col space-y-6">
                         <PlayerCard isSpy={isSpy} location={location} role={role} />
                         <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
                     </div>
-                    {/* Middle Column: RoomChatHistory (middle) */}
+                        {/* Middle Column: RoomChatHistory (middle) */}
                     <div className="lg:col-span-1 flex flex-col space-y-6">
                         <RoomChatCard roomChat={roomChat}/>
                     </div>
-                    {/* Right Column: Locations card (right) */}
+                        {/* Right Column: Locations card (right) */}
                     <div className="lg:col-span-1 flex flex-col space-y-6">
                         <LocationsCard locationsArr={locationsArr}/>
                     </div>
