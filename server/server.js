@@ -327,7 +327,7 @@ io.on('connection', (socket) => {
     }));
 
     //create room
-    socket.on('createRoom', withErrorHandling(async ({}) => {
+    socket.on('createRoom', withErrorHandling(async ({}, callback) => {
         let newRoomCode = generateCode(4);
         let existingRoom = await Room.findOne({ roomCode: newRoomCode });
         while (existingRoom) {
@@ -343,8 +343,8 @@ io.on('connection', (socket) => {
         });
         await newRoom.save();
         // Does not join room yet, only creates room
-        //emit annoucement event with room code to host client, client can then emit joinRoom
-        socket.emit('message',  { type: 'roomCreated', message: `New room created id: ${newRoomCode}.`, roomCode: newRoomCode});
+        //send room code back to client through callback
+        callback({ status: 'success', message: `New room created id: ${newRoomCode}.`, roomCode: newRoomCode });
         serverLog(`Created new room with id: ${newRoom._id}, and code: ${newRoomCode}`);
     }));
     

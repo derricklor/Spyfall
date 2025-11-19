@@ -10,7 +10,10 @@ import RoomChatCard from './components/RoomChatCard';
 import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
 
-import { socket, createRoom, joinRoom, leaveRoom, startGame, vote, callVote, spyGuessLocation, getLocations} from './socket.js';
+import { io } from 'socket.io-client';
+
+const URL = 'http://localhost:3000';
+const socket = io(URL);
 
 // --- Main App Component ---
 const App = () => {
@@ -41,6 +44,107 @@ const App = () => {
             }
         });
     }
+
+    const createRoom = () => {
+        socket.emit('createRoom', response);
+        if (response.status !== 'success') {
+            console.error("Error creating room.");
+            alert("Error creating room. Please try again.");
+        } else { // else success
+            //get room code from server, then emit joinRoom to server
+            setRoomCode(response.roomCode);
+            setRoomChat(prev => [...prev, "Created room " + response.roomCode]);
+            joinRoom(data.roomCode, playerNameRef.current);
+        }
+    };
+
+    const joinRoom = (roomCode, inputName) => {
+        socket.emit('joinRoom', { roomCode, inputName }, response);
+        if (response.status !== 'success') {
+            console.error("Error joining room.");
+            alert("Error joining room. Please try again.");
+        } else { // else success
+            setView('room');
+            setRoomChat(prev => [...prev, "Joined room " + roomCode]);
+            setRoomCode(data.roomCode);
+            setPlayerCode(data.playerCode);
+            setPlayerList(data.playerList);
+        }
+    };
+
+    const leaveRoom = (roomCode, playerCode) => {
+        socket.emit('leaveRoom', { roomCode, playerCode }, response);
+        if (response.status !== 'success') {
+            console.error("Error leaving room.");
+            alert("Error leaving room. Please try again.");
+        } else { // else success
+            setView('lobby');
+            setRoomChat(["Welcome to the room!"]);
+            console.log("You have left room " + roomCode);
+        }
+    }
+
+    const startGame = (roomCode, name) => {
+        socket.emit('startGame', { roomCode, name }, response);
+        if (response.status !== 'success') {
+            console.error("Error starting game.");
+            alert("Error starting game. Please try again.");
+        } else { // else success
+            setView('in-progress');
+            setRoomChat(prev => [...prev, "Game has started!"]);
+            setGameCountdownTargetDate(new Date(response.endDate));
+        }
+    };
+
+    const vote = (roomCode, playerCode, votedFor) => {
+        socket.emit('vote', { roomCode, playerCode, votedFor }, response);
+        if (response.status !== 'success') {
+            console.error("Error submitting vote.");
+            alert("Error submitting vote. Please try again.");
+        } else { // else success
+            setRoomChat(prev => [...prev, "You have voted for " + votedFor]);
+        }
+    };
+
+    const callVote = (roomCode, name) => {
+        socket.emit('callVote', { roomCode, name }, response);
+        if (response.status !== 'success') {
+            console.error("Error calling vote.");
+            alert("Error calling vote. Please try again.");
+        } else { // else success
+            setView('vote');
+            setRoomChat(prev => [...prev, data.message]);
+            setVoteCountdownTargetDate(new Date(data.endDate));
+        }
+    };
+
+    const spyGuessLocation = (roomCode, playerCode, guessedLocation) => {
+        socket.emit('spyGuessLocation', { roomCode, playerCode, guessedLocation }, response);
+        if (response.status !== 'success') {
+            console.error("Error submitting location guess.");
+            alert("Error submitting location guess. Please try again.");
+        } else { // else success
+            if (response.correct) {
+                setRoomChat(prev => [...prev, "Spy guessed the location correctly! It was " + guessedLocation]);
+                
+            } else {
+                setRoomChat(prev => [...prev, "Spy guessed the location incorrectly. It was not " + guessedLocation]);
+            }
+            setRoomChat(prev => [...prev, "The Spy was " + response.spyName]);
+            setRoomChat(prev => [...prev, "Game over!"]);
+            setView('room');
+        }
+    };
+
+    const getLocations = () => {
+        socket.emit('getLocations', response);
+        if (response.status !== 'success') {
+            console.error("Error fetching locations.");
+            alert("Error fetching locations. Please try again.");
+        } else { // else success
+            setLocationsArr(response.locations); //array of objs
+        }
+    };
 
 
     useEffect(() => {
@@ -85,12 +189,6 @@ const App = () => {
                 case 'announcement':
                     setRoomChat(prev => [...prev, data.message]);
                     break;
-                case 'roomCreated':
-                    //get room code from server, then emit joinRoom to server
-                    setRoomChat(prev => [...prev, data.message]);
-                    setRoomCode(data.roomCode);
-                    joinRoom(data.roomCode, playerNameRef.current);
-                    break;
                 case 'roleAssigned':
                     setRole(data.role);
                     if (data.role === 'Spy') {
@@ -105,16 +203,6 @@ const App = () => {
                     setRole('');
                     setLocation('');
                     break;
-                case 'locationsList':
-                    setLocationsArr(data.locations); //array of objs
-                    break;
-                case 'joinedRoom': //acknowledgement of joining room
-                    setView('room');
-                    setRoomChat(prev => [...prev, data.message]);
-                    setRoomCode(data.roomCode);
-                    setPlayerCode(data.playerCode);
-                    setPlayerList(data.playerList);
-                    break;
                 case 'playerJoined':
                     setRoomChat(prev => [...prev, data.message]);
                     setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// any player that joins cannot be host
@@ -127,21 +215,6 @@ const App = () => {
                     if (data.newHostName) {
                         setPlayerList(prev => prev.map(p => p.name === data.newHostName ? { ...p, isHost: true } : p));
                     }
-                    break;
-                case 'voteCalled':
-                    setView('vote');
-                    setRoomChat(prev => [...prev, data.message]);
-                    setVoteCountdownTargetDate(new Date(data.endDate));
-                    break;
-                case 'gameStarted':
-                    setView('in-progress');
-                    setRoomChat(prev => [...prev, data.message]);
-                    setGameCountdownTargetDate(new Date(data.endDate));
-                    break;
-                case 'leftRoom':
-                    setView('lobby');
-                    setRoomChat(["Welcome to the room!"]);
-                    console.log(data.message);
                     break;
                 default:
                     break;
