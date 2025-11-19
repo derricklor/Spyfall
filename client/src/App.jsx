@@ -11,6 +11,7 @@ import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
 
 import { io } from 'socket.io-client';
+import { set } from 'mongoose';
 
 const URL = 'http://localhost:3000';
 const socket = io(URL);
@@ -61,8 +62,8 @@ const App = () => {
     const joinRoom = (roomCode, inputName) => {
         socket.emit('joinRoom', { roomCode, inputName }, response);
         if (response.status !== 'success') {
-            console.error("Error joining room.");
-            alert("Error joining room. Please try again.");
+            console.error("Error joining room. " + response.message);
+            alert("Error joining room. Please try again. " + response.message);
         } else { // else success
             setView('room');
             setRoomChat(prev => [...prev, "Joined room " + roomCode]);
@@ -75,64 +76,56 @@ const App = () => {
     const leaveRoom = (roomCode, playerCode) => {
         socket.emit('leaveRoom', { roomCode, playerCode }, response);
         if (response.status !== 'success') {
-            console.error("Error leaving room.");
-            alert("Error leaving room. Please try again.");
+            console.error("Error leaving room. " + response.message);
+            setRoomChat(prev => [...prev, "Error leaving room. " + response.message]);
         } else { // else success
             setView('lobby');
             setRoomChat(["Welcome to the room!"]);
-            console.log("You have left room " + roomCode);
+            console.log(response.message);
         }
     }
 
-    const startGame = (roomCode, name) => {
-        socket.emit('startGame', { roomCode, name }, response);
+    const startGame = (roomCode, playerCode) => {
+        socket.emit('startGame', { roomCode, playerCode }, response);
         if (response.status !== 'success') {
-            console.error("Error starting game.");
-            alert("Error starting game. Please try again.");
+            console.error("Error starting game. " + response.message);
+            setRoomChat(prev => [...prev, "Error starting game. " + response.message]);
         } else { // else success
-            setView('in-progress');
-            setRoomChat(prev => [...prev, "Game has started!"]);
-            setGameCountdownTargetDate(new Date(response.endDate));
+            //wait for gameStarted event from server to update view and other info
+            setRoomChat(prev => [...prev, "Game is starting..."]);
         }
     };
 
     const vote = (roomCode, playerCode, votedFor) => {
         socket.emit('vote', { roomCode, playerCode, votedFor }, response);
         if (response.status !== 'success') {
-            console.error("Error submitting vote.");
-            alert("Error submitting vote. Please try again.");
+            console.error("Error submitting vote. " + response.message);
+            setRoomChat(prev => [...prev, "Error submitting vote. " + response.message]);
         } else { // else success
             setRoomChat(prev => [...prev, "You have voted for " + votedFor]);
         }
     };
 
-    const callVote = (roomCode, name) => {
-        socket.emit('callVote', { roomCode, name }, response);
+    const callVote = (roomCode, playerCode) => {
+        socket.emit('callVote', { roomCode, playerCode }, response);
         if (response.status !== 'success') {
             console.error("Error calling vote.");
-            alert("Error calling vote. Please try again.");
+            setRoomChat(prev => [...prev, response.message]);
         } else { // else success
             setView('vote');
-            setRoomChat(prev => [...prev, data.message]);
-            setVoteCountdownTargetDate(new Date(data.endDate));
+            setRoomChat(prev => [...prev, response.message]);
+            setVoteCountdownTargetDate(new Date(response.endDate));
         }
     };
 
     const spyGuessLocation = (roomCode, playerCode, guessedLocation) => {
         socket.emit('spyGuessLocation', { roomCode, playerCode, guessedLocation }, response);
         if (response.status !== 'success') {
-            console.error("Error submitting location guess.");
-            alert("Error submitting location guess. Please try again.");
+            console.error("Error submitting location guess. " + response.message);
+            setRoomChat(prev => [...prev, "Error submitting location guess. " + response.message]);
         } else { // else success
-            if (response.correct) {
-                setRoomChat(prev => [...prev, "Spy guessed the location correctly! It was " + guessedLocation]);
-                
-            } else {
-                setRoomChat(prev => [...prev, "Spy guessed the location incorrectly. It was not " + guessedLocation]);
-            }
-            setRoomChat(prev => [...prev, "The Spy was " + response.spyName]);
-            setRoomChat(prev => [...prev, "Game over!"]);
-            setView('room');
+            //let server send announcement of result
+            
         }
     };
 
@@ -189,13 +182,21 @@ const App = () => {
                 case 'announcement':
                     setRoomChat(prev => [...prev, data.message]);
                     break;
+                case 'gameStarted':
+                    setView('in-progress');
+                    setRoomChat(prev => [...prev, data.message]);
+                    setGameCountdownTargetDate(new Date(data.endDate));
+                    break;
                 case 'roleAssigned':
                     setRole(data.role);
-                    if (data.role === 'Spy') {
-                        setLocation('Unknown');
-                    } else {
-                        setLocation(data.location);
-                    }
+                    setLocation(data.location);
+                    //popup alert to show role and location
+                    alert(`Your role is: ${role}\nYour location is: ${location}`);
+                    break;
+                case 'voteCalled':
+                    setView('vote');
+                    setRoomChat(prev => [...prev, data.message]);
+                    setVoteCountdownTargetDate(new Date(data.endDate));
                     break;
                 case 'resetRoom':
                     setView('room');
