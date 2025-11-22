@@ -12,7 +12,7 @@ const LocationsCard = ({locationsArr}) => { //destructure locationsArr from prop
                 {locationsArr?.map((element) => (
                     <div
                         key={element._id}
-                        className="aspect-square bg-gray-700 hover:bg-gray-600 transition duration-150 rounded-lg flex items-center justify-center p-2 text-sm text-gray-400 cursor-pointer border border-gray-600"
+                        className="aspect-square bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 rounded-lg flex items-center justify-center p-2 text-sm text-gray-800 dark:text-gray-400 cursor-pointer border border-gray-400 dark:border-gray-600"
                         style={{ minHeight: '80px' }}>
                             {element.name}
                     </div>

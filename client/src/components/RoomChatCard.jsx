@@ -16,10 +16,10 @@ const RoomChatCard = ({roomChat, sendChatMessage}) => {
             <div className="flex-grow overflow-y-auto mb-4">
                 {roomChat.map((msg, index) => (
                     <div key={index} className="mb-2">
-                        <span className="font-semibold text-white">{msg}</span>
+                        <span className="font-semibold text-black dark:text-white">{msg}</span>
                     </div>
                 ))}
-                <input type="text" className="font-semibold text-white border-2 border-gray-500 rounded-l " placeholder='...'
+                <input type="text" className="font-semibold bg-white dark:bg-gray-800 text-black dark:text-white border-2 border-gray-300 dark:border-gray-500 rounded-l " placeholder='...'
                     onKeyDown={handleKeyPress} />
             </div>
 

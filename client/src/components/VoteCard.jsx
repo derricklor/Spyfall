@@ -7,7 +7,7 @@ const VoteCard = ({playerList, onVote}) => {
                     <button
                         key={index}
                         onClick={() => onVote(player.name)}
-                        className="w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-lg font-medium transition duration-150"
+                        className="w-full py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-black dark:text-white text-lg font-medium transition duration-150"
                     >
                         <span className="text-xl">{ player.isHost ? 'Host '+ player.name : player.name}</span>
 
