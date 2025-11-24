@@ -391,7 +391,7 @@ io.on('connection', (socket) => {
             
             socket.join(roomCode);//join socket.io room with room code as string
             //callback event to joining player with room and player info
-            callback({ status: 'success', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerCode: playerCode, playerList: playerList });
+            callback({ status: 'success', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerName: playerName, playerCode: playerCode, playerList: playerList });
             // Notify all other clients in the room about the joining player
             // specifically socket.to(room), sends to all sockets in room except sender
             socket.to(roomCode).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 

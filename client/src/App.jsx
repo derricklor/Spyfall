@@ -66,6 +66,7 @@ const App = () => {
             alert("Error joining room. Please try again. " + response.message);
         } else { // else success
             setView('room');
+            setPlayerName(response.playerName); //returned name could be different
             setRoomChat(prev => [...prev, "Joined room " + roomCode]);
             setRoomCode(data.roomCode);
             setPlayerCode(data.playerCode);
@@ -267,31 +268,13 @@ const App = () => {
             case 'lobby':
                 return <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4">
                     <PlayerContext.Provider value={{ playerName, setPlayerName,  roomCode, setRoomCode }}> {/*pass as object */}
-                        
-                        <div className='flex inset-0 bg-cyan-500 dark:bg-cyan-900 shadow-xl'>
-                            <h1 className='text-xl text-black'>Spyfall</h1>
-                            <button className="rounded-l" onClick={toggleTheme}>
-                                {theme === 'dark' ?
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-                                    </svg>
-                                :
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
-                                    </svg>
-                                }
-
-                            </button>
-                        </div>
                         <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} />
-                        
                     </PlayerContext.Provider>
                 </div>
             case 'room': 
                 return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
                     <PlayerContext.Provider value={{roomCode, playerName}}>
                         <button onClick={() => {leaveRoom(roomCode, playerCode);
-                            console.log(`[DEBUG] Leaving room ${roomCode} as ${playerName}`);
                         }} // wait for leftRoom handler to get response
                             className="absolute top-4 left-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
                             py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
@@ -299,8 +282,13 @@ const App = () => {
                         </button>
                             {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
                         <div className="lg:col-span-1 flex flex-col space-y-6">
+                            <div className="text-center mb-6">
+                                <p className="text-gray-600 dark:text-gray-400">Room Code</p>
+                                <h2 className="text-5xl font-extrabold tracking-widest text-baby-blue-600 dark:text-baby-blue-400 select-all">{roomCode}</h2>
+                                <p className="text-gray-500 dark:text-gray-500 mt-2">Share this code with your friends!</p>
+                            </div>
                             {/* <PlayerCard isSpy={isSpy} location={location} role={role} /> */}
-                            <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
+                            <ActionsCard timeLeft={countdownTime} playerList={playerList} onStartGame={startGame}/>
                         </div>
                             {/* Middle Column: RoomChatHistory (middle) */}
                         <div className="lg:col-span-1 flex flex-col space-y-6">
@@ -351,14 +339,28 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-gray-300 dark:bg-gray-900 text-black dark:text-white font-sans flex flex-col items-center justify-center p-4">
+            <div className='flex inset-0 bg-cyan-500 dark:bg-cyan-900 shadow-xl'>
+                <h1 className='text-xl text-black'>Spyfall</h1>
+                <button className="rounded-l" onClick={toggleTheme}>
+                    {theme === 'dark' ?
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                        </svg>
+                        :
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                        </svg>
+                    }
+                </button>
+            </div>
             {/* Global Style and Theme Setup */}
             <style>{`
-        /* Custom scrollbar for a darker theme */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
-      `}</style>
+                /* Custom scrollbar for a darker theme */
+                ::-webkit-scrollbar { width: 8px; }
+                ::-webkit-scrollbar-track { background: #1f2937; }
+                ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+                ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+            `}</style>
 
             <main className="w-full max-w-6xl h-[90vh] flex flex-col">
                 <section className="flex-grow overflow-auto rounded-b-xl">
