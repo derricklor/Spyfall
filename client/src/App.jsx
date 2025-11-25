@@ -36,7 +36,7 @@ const App = () => {
     const playerNameRef = useRef(playerName);
 
     const sendChatMessage = (message) => {
-        socket.emit('chatMessage', { roomCode, playerCode, message }, function(response) {
+        socket.emit('chatMessage', { roomCode, playerCode, message }, response => {
             if (response.status !== 'success') {
                 // mark message as failed to send
                 setRoomChat(prev => [...prev, "*Error sending previous message*"]);
@@ -310,14 +310,9 @@ const App = () => {
                 </div>
             case 'in-progress':
                 return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
-                    <button onClick={() => {
-                            socket.emit('leaveRoom', {
-                                roomCode: localStorage.getItem('SpyfallRoomCode'),
-                                playerCode: localStorage.getItem('SpyfallPlayerCode')
-                            });
-                        }}
+                    <button onClick={() => { leaveRoom(roomCode, playerCode); }} // wait for leftRoom handler to get response
                         className="absolute top-4 left-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
-                        py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
+                            py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
                         Leave Room
                     </button>
                         {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}

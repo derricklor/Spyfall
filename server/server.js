@@ -235,8 +235,9 @@ io.on('connection', (socket) => {
     //handle chat message from room
     socket.on('chatMessage', withErrorHandling(async ({roomCode, playerCode, message}, callback) => {
         //check if roomCode and player exists
+        
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
-        //emit to everyone in room except sender, use generic announcement type
+        //emit to everyone in room except sender, use generic annoucement type
         socket.to(roomCode).emit('message', { type: 'announcement', message: `${player.name}: ${message}`});
         //send callback acknowledgement success or error
         callback({status: 'success'});
