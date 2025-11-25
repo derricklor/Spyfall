@@ -36,7 +36,7 @@ const App = () => {
     const playerNameRef = useRef(playerName);
 
     const sendChatMessage = (message) => {
-        socket.emit('chatMessage', { roomCode, playerCode, message }, response => {
+        socket.emit('chatMessage', { roomCode, playerCode, message }, function(response) {
             if (response.status !== 'success') {
                 // mark message as failed to send
                 setRoomChat(prev => [...prev, "*Error sending previous message*"]);
@@ -47,97 +47,105 @@ const App = () => {
     }
 
     const createRoom = () => {
-        socket.emit('createRoom', response);
-        if (response.status !== 'success') {
-            console.error("Error creating room.");
-            alert("Error creating room. Please try again.");
-        } else { // else success
-            //get room code from server, then emit joinRoom to server
-            setRoomCode(response.roomCode);
-            setRoomChat(prev => [...prev, "Created room " + response.roomCode]);
-            joinRoom(data.roomCode, playerNameRef.current);
-        }
+        socket.emit('createRoom', function(response) {
+            if (response.status !== 'success') {
+                console.error("Error creating room.");
+                alert("Error creating room. Please try again.");
+            } else { // else success
+                //get room code from server, then emit joinRoom to server
+                setRoomCode(response.roomCode);
+                setRoomChat(prev => [...prev, "Created room " + response.roomCode]);
+                joinRoom(response.roomCode, playerNameRef.current);
+            }
+        });
     };
 
     const joinRoom = (roomCode, inputName) => {
-        socket.emit('joinRoom', { roomCode, inputName }, response);
-        if (response.status !== 'success') {
-            console.error("Error joining room. " + response.message);
-            alert("Error joining room. Please try again. " + response.message);
-        } else { // else success
-            setView('room');
-            setPlayerName(response.playerName); //returned name could be different
-            setRoomChat(prev => [...prev, "Joined room " + roomCode]);
-            setRoomCode(data.roomCode);
-            setPlayerCode(data.playerCode);
-            setPlayerList(data.playerList);
-        }
+        socket.emit('joinRoom', { roomCode, inputName }, function(response) {
+            if (response.status !== 'success') {
+                console.error("Error joining room. " + response.message);
+                alert("Error joining room. Please try again. " + response.message);
+            } else { // else success
+                setView('room');
+                setPlayerName(response.playerName); //returned name could be different
+                setRoomChat(prev => [...prev, "Joined room " + roomCode]);
+                setRoomCode(response.roomCode);
+                setPlayerCode(response.playerCode);
+                setPlayerList(response.playerList);
+            }
+        });
     };
 
     const leaveRoom = (roomCode, playerCode) => {
-        socket.emit('leaveRoom', { roomCode, playerCode }, response);
-        if (response.status !== 'success') {
-            console.error("Error leaving room. " + response.message);
-            setRoomChat(prev => [...prev, "Error leaving room. " + response.message]);
-        } else { // else success
-            setView('lobby');
-            setRoomChat(["Welcome to the room!"]);
-            console.log(response.message);
-        }
+        socket.emit('leaveRoom', { roomCode, playerCode }, function(response) {
+            if (response.status !== 'success') {
+                console.error("Error leaving room. " + response.message);
+                setRoomChat(prev => [...prev, "Error leaving room. " + response.message]);
+            } else { // else success
+                setView('lobby');
+                setRoomChat(["Welcome to the room!"]);
+                console.log(response.message);
+            }
+        });
     }
 
     const startGame = (roomCode, playerCode) => {
-        socket.emit('startGame', { roomCode, playerCode }, response);
-        if (response.status !== 'success') {
-            console.error("Error starting game. " + response.message);
-            setRoomChat(prev => [...prev, "Error starting game. " + response.message]);
-        } else { // else success
-            //wait for gameStarted event from server to update view and other info
-            setRoomChat(prev => [...prev, "Game is starting..."]);
-        }
+        socket.emit('startGame', { roomCode, playerCode }, function(response) {
+            if (response.status !== 'success') {
+                console.error("Error starting game. " + response.message);
+                setRoomChat(prev => [...prev, "Error starting game. " + response.message]);
+            } else { // else success
+                //wait for gameStarted event from server to update view and other info
+                setRoomChat(prev => [...prev, "Game is starting..."]);
+            }
+        });
     };
 
     const vote = (roomCode, playerCode, votedFor) => {
-        socket.emit('vote', { roomCode, playerCode, votedFor }, response);
-        if (response.status !== 'success') {
-            console.error("Error submitting vote. " + response.message);
-            setRoomChat(prev => [...prev, "Error submitting vote. " + response.message]);
-        } else { // else success
-            setRoomChat(prev => [...prev, "You have voted for " + votedFor]);
-        }
+        socket.emit('vote', { roomCode, playerCode, votedFor }, function(response) {
+            if (response.status !== 'success') {
+                console.error("Error submitting vote. " + response.message);
+                setRoomChat(prev => [...prev, "Error submitting vote. " + response.message]);
+            } else { // else success
+                setRoomChat(prev => [...prev, "You have voted for " + votedFor]);
+            }
+        });
     };
 
     const callVote = (roomCode, playerCode) => {
-        socket.emit('callVote', { roomCode, playerCode }, response);
-        if (response.status !== 'success') {
-            console.error("Error calling vote.");
-            setRoomChat(prev => [...prev, response.message]);
-        } else { // else success
-            setView('vote');
-            setRoomChat(prev => [...prev, response.message]);
-            setVoteCountdownTargetDate(new Date(response.endDate));
-        }
+        socket.emit('callVote', { roomCode, playerCode }, function(response) {
+            if (response.status !== 'success') {
+                console.error("Error calling vote.");
+                setRoomChat(prev => [...prev, response.message]);
+            } else { // else success
+                setView('vote');
+                setRoomChat(prev => [...prev, response.message]);
+                setVoteCountdownTargetDate(new Date(response.endDate));
+            }
+        });
     };
 
     const spyGuessLocation = (roomCode, playerCode, guessedLocation) => {
-        socket.emit('spyGuessLocation', { roomCode, playerCode, guessedLocation }, response);
-        if (response.status !== 'success') {
-            console.error("Error submitting location guess. " + response.message);
-            setRoomChat(prev => [...prev, "Error submitting location guess. " + response.message]);
-        } else { // else success
-            //let server send announcement of result
-            
-        }
+        socket.emit('spyGuessLocation', { roomCode, playerCode, guessedLocation }, function(response) {
+            if (response.status !== 'success') {
+                console.error("Error submitting location guess. " + response.message);
+                setRoomChat(prev => [...prev, "Error submitting location guess. " + response.message]);
+            } else { // else success
+                //let server send announcement of result
+                
+            }
+        });
     };
 
     const getLocations = () => {
-        socket.emit('getLocations', response);
-        if (response.status !== 'success') {
-            console.error("Error fetching locations.");
-            alert("Error fetching locations. Please try again.");
-        } else { // else success
-            setLocationsArr(response.locations); //array of objs
-        }
+        socket.emit('getLocations', function(response) {
+            if (response.status !== 'success') {
+                console.error("Error fetching locations.");
+                alert("Error fetching locations. Please try again.");
+            } else { // else success
+                setLocationsArr(response.locations); //array of objs
+            }
+        });
     };
 
 
@@ -151,7 +159,7 @@ const App = () => {
             getLocations();
             
         } catch (error) {
-            console.log("Unable to get locations. Server might not be online.");
+            console.log("Unable to get locations. Server might not be online. " + error.message);
         }
     }, []);
 
@@ -362,8 +370,8 @@ const App = () => {
                 ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
             `}</style>
 
-            <main className="w-full max-w-6xl h-[90vh] flex flex-col">
-                <section className="flex-grow overflow-auto rounded-b-xl">
+            <main className="w-full h-[90vh] flex flex-col">
+                <section className="flex-grow mx-auto overflow-auto rounded-b-xl">
                     {renderView()}
                 </section>
             </main>

@@ -10,45 +10,47 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
     
     return (
         <Card title="" className="p-6 h-full flex flex-col space-y-8">
-            <div className="space-y-4">
+            <div className="space-y-4 pt-4 pb-8 border-b border-gray-900 dark:border-gray-700">
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-black dark:text-gray-300">Welcome!</h2>
                     <p className="text-black dark:text-gray-300 mt-2">Enter your name to begin.</p>
                 </div>
-                <input type="text" placeholder="Your Name" id='name'
-                    value={playerContextObj.playerName} maxLength={20}
-                    onChange={(e) => playerContextObj.setPlayerName(e.target.value)}
-                    className="col-span-3 p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 rounded-lg text-black dark:text-white"
-                />
-                <button onClick={()=> onCreateRoom(playerContextObj.playerName)} // anonymous function to pass name value
-                    className={`flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
+                <div className="flex justify-center gap-4">
+                    <input type="text" placeholder="Your Name" id='name'
+                        value={playerContextObj.playerName} maxLength={20}
+                        onChange={(e) => playerContextObj.setPlayerName(e.target.value)}
+                        className="p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 rounded-lg text-black dark:text-white"
+                    />
+                    <button onClick={() => onCreateRoom(playerContextObj.playerName)} // anonymous function to pass name value
+                        className={`flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
                         shadow-md ${!playerContextObj.playerName ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
-                    disabled={!playerContextObj.playerName}>
-                    Create
-                </button>
+                        disabled={!playerContextObj.playerName}>
+                        Create Room
+                    </button>
+                </div>
             </div>
 
             <div className="flex">
-                <div className="border-t border-gray-300 dark:border-gray-600"></div>
                 <span className="mx-auto text-black dark:text-gray-300">Or</span>
-                <div className="border-t border-gray-300 dark:border-gray-600"></div>
             </div>
                 
             <div className="space-y-4 pt-4 border-t border-gray-900 dark:border-gray-700">
                 <div className="text-center mb-8">
                     <p className="text-black dark:text-gray-300 mt-2">Join with Code</p>
                 </div>
-                <input type="text" maxLength="4" placeholder="0000" id='code'
-                    value={playerContextObj.roomCode}
-                    onChange={(e) => playerContextObj.setRoomCode(e.target.value.toUpperCase())}
-                    className="col-span-3 p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 rounded-lg text-black dark:text-white"
-                />
-                <button onClick={() => { onJoinRoom(playerContextObj.roomCode, playerContextObj.playerName); }} // anonymous function to pass name and code values
-                    className={`flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
-                        shadow-md ${(playerContextObj.roomCode.length !== 4) || (!playerContextObj.playerName) ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
-                    disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName} >
-                    Join
-                </button>
+                <div className="flex justify-center gap-4">
+                    <input type="text" maxLength="4" placeholder="0000" id='code'
+                        value={playerContextObj.roomCode}
+                        onChange={(e) => playerContextObj.setRoomCode(e.target.value.toUpperCase())}
+                        className="p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 rounded-lg text-black dark:text-white"
+                    />
+                    <button onClick={() => { onJoinRoom(playerContextObj.roomCode, playerContextObj.playerName); }} // anonymous function to pass name and code values
+                        className={`flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
+                            shadow-md ${(playerContextObj.roomCode.length !== 4) || (!playerContextObj.playerName) ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
+                        disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName} >
+                        Join Room
+                    </button>
+                </div>
             </div>
 
         </Card>
