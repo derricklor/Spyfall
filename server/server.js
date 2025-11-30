@@ -388,7 +388,8 @@ io.on('connection', (socket) => {
             await room.save();
             
             const updatedRoom = await Room.findOne({ roomCode });// get latest room data
-            const playerList = updatedRoom.players.map(p => ({ name: p.name, isHost: p.isHost }));// get player list of names and who is host
+            // map returns new array populated by values returned from function, which is object with name and isHost
+            const playerList = updatedRoom.players.map(p => ({ name: p.name, isHost: p.isHost }));
             
             socket.join(roomCode);//join socket.io room with room code as string
             //callback event to joining player with room and player info

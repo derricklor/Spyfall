@@ -288,14 +288,14 @@ const App = () => {
                             py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
                             Leave Room
                         </button>
-                            {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
+                            {/* Left Column: action card */}
                         <div className="lg:col-span-1 flex flex-col space-y-6">
                             <div className="text-center mb-6">
                                 <p className="text-gray-600 dark:text-gray-400">Room Code</p>
                                 <h2 className="text-5xl font-extrabold tracking-widest text-baby-blue-600 dark:text-baby-blue-400 select-all">{roomCode}</h2>
                                 <p className="text-gray-500 dark:text-gray-500 mt-2">Share this code with your friends!</p>
                             </div>
-                            {/* <PlayerCard isSpy={isSpy} location={location} role={role} /> */}
+                            
                             <ActionsCard timeLeft={countdownTime} playerList={playerList} onStartGame={startGame}/>
                         </div>
                             {/* Middle Column: RoomChatHistory (middle) */}
@@ -310,24 +310,27 @@ const App = () => {
                 </div>
             case 'in-progress':
                 return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
-                    <button onClick={() => { leaveRoom(roomCode, playerCode); }} // wait for leftRoom handler to get response
-                        className="absolute top-4 left-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                    <PlayerContext.Provider value={{roomCode, playerName}}>
+                        <button onClick={() => {leaveRoom(roomCode, playerCode);
+                        }} // wait for leftRoom handler to get response
+                            className="absolute top-4 left-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
                             py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
-                        Leave Room
-                    </button>
-                        {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
-                    <div className="lg:col-span-1 flex flex-col space-y-6">
-                        <PlayerCard isSpy={isSpy} location={location} role={role} />
-                        <ActionsCard timeLeft={countdownTime} playerList={playerList}/>
-                    </div>
-                        {/* Middle Column: RoomChatHistory (middle) */}
-                    <div className="lg:col-span-1 flex flex-col space-y-6">
-                        <RoomChatCard roomChat={roomChat}/>
-                    </div>
-                        {/* Right Column: Locations card (right) */}
-                    <div className="lg:col-span-1 flex flex-col space-y-6">
-                        <LocationsCard locationsArr={locationsArr}/>
-                    </div>
+                            Leave Room
+                        </button>
+                            {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
+                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                            <PlayerCard location={location} role={role}/>
+                            <ActionsCard timeLeft={countdownTime} playerList={playerList} onStartGame={startGame}/>
+                        </div>
+                            {/* Middle Column: RoomChatHistory (middle) */}
+                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                            <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
+                        </div>
+                            {/* Right Column: Locations card (right) */}
+                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                            <LocationsCard locationsArr={locationsArr}/>
+                        </div>
+                    </PlayerContext.Provider>
                 </div>
             case 'vote':
                 return <div className="grid grid-cols-1 gap-6 w-full h-full p-4">
