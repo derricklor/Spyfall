@@ -280,16 +280,16 @@ const App = () => {
                     </PlayerContext.Provider>
                 </div>
             case 'room': 
-                return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
+                return <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 lg:mx-auto">
                     <PlayerContext.Provider value={{roomCode, playerName}}>
-                        <button onClick={() => {leaveRoom(roomCode, playerCode);
-                        }} // wait for leftRoom handler to get response
-                            className="absolute top-4 left-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
-                            py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
-                            Leave Room
-                        </button>
                             {/* Left Column: action card */}
-                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <div className="col-span-1 space-y-6">
+                            <button onClick={() => {leaveRoom(roomCode, playerCode);
+                            }} // wait for leftRoom handler to get response
+                                className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                                py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
+                                Leave Room
+                            </button>
                             <div className="text-center mb-6">
                                 <p className="text-gray-600 dark:text-gray-400">Room Code</p>
                                 <h2 className="text-5xl font-extrabold tracking-widest text-baby-blue-600 dark:text-baby-blue-400 select-all">{roomCode}</h2>
@@ -299,35 +299,36 @@ const App = () => {
                             <ActionsCard timeLeft={countdownTime} playerList={playerList} onStartGame={startGame}/>
                         </div>
                             {/* Middle Column: RoomChatHistory (middle) */}
-                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <div className="col-span-1 lg:col-span-3 space-y-6">
                             <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
                         </div>
-                            {/* Right Column: Locations card (right) */}
-                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                            {/* Second row */}
+                        <div className="col-span-1 lg:col-span-2 lg:col-start-2 space-y-6">
                             <LocationsCard locationsArr={locationsArr}/>
                         </div>
                     </PlayerContext.Provider>
                 </div>
             case 'in-progress':
-                return <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full p-4 lg:p-8">
+                return <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 lg:mx-auto">
                     <PlayerContext.Provider value={{roomCode, playerName}}>
-                        <button onClick={() => {leaveRoom(roomCode, playerCode);
-                        }} // wait for leftRoom handler to get response
-                            className="absolute top-4 left-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
-                            py-2 px-4 rounded-lg font-medium transition duration-200 shadow-md z-10">
-                            Leave Room
-                        </button>
+                        
                             {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
-                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <div className="col-span-1 space-y-6">
+                            <button onClick={() => { leaveRoom(roomCode, playerCode);
+                                }} // wait for leftRoom handler to get response
+                                className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                                py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
+                                Leave Room
+                            </button>
                             <PlayerCard location={location} role={role}/>
                             <ActionsCard timeLeft={countdownTime} playerList={playerList} onStartGame={startGame}/>
                         </div>
                             {/* Middle Column: RoomChatHistory (middle) */}
-                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <div className="col-span-1 lg:col-span-3 space-y-6">
                             <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
                         </div>
                             {/* Right Column: Locations card (right) */}
-                        <div className="lg:col-span-1 flex flex-col space-y-6">
+                        <div className="col-span-1 lg:col-span-2 lg:col-start-2 space-y-6">
                             <LocationsCard locationsArr={locationsArr}/>
                         </div>
                     </PlayerContext.Provider>
@@ -344,9 +345,9 @@ const App = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-300 dark:bg-gray-900 text-black dark:text-white font-sans flex flex-col items-center justify-center p-4">
-            <div className='flex inset-0 bg-cyan-500 dark:bg-cyan-900 shadow-xl'>
-                <h1 className='text-xl text-black'>Spyfall</h1>
+        <div className="min-h-screen bg-gray-300 dark:bg-gray-900 text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4">
+            <div className='fixed top-0 flex w-full bg-cyan-500 dark:bg-cyan-900 shadow-xl p-4 items-center justify-between'>
+                <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
                 <button className="rounded-l" onClick={toggleTheme}>
                     {theme === 'dark' ?
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -368,10 +369,8 @@ const App = () => {
                 ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
             `}</style>
 
-            <main className="w-full h-[90vh] flex flex-col">
-                <section className="flex-grow mx-auto overflow-auto rounded-b-xl">
-                    {renderView()}
-                </section>
+            <main className="w-full h-[calc(100vh-64px)] flex flex-col">
+                {renderView()}
             </main>
         </div>
     );

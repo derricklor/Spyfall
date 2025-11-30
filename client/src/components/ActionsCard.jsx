@@ -17,8 +17,9 @@ const ActionsCard = ({ timeLeft, playerList, onStartGame }) => {
 
                     {playerList.map((player, index) => (
                         <li key={index} className="flex items-center justify-between text-gray-700 dark:text-gray-300">
-                            <span className="font-semibold text-gray-900 dark:text-white truncate">{player.name}</span>
+                            <span className="font-semibold text-gray-900 dark:text-white truncate">{player.name}
                             {player.isHost && <span className="text-xs text-cyan-600 dark:text-cyan-400 block">Host</span>}
+                            </span>
                         </li>
                     ))}
                 </div>
