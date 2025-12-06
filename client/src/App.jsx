@@ -17,12 +17,12 @@ const socket = io(URL);
 
 // --- Main App Component ---
 const App = () => {
-    const [view, setView] = useState('lobby'); // 'lobby', 'room', 'in-progress','vote'
+    const [view, setView] = useState('lobby'); // 'lobby', 'room', 'revealrole','in-progress','vote'
     const [theme, setTheme] = useState('dark');
 
-    const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
-    const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
-    const [countdownTime, setCountdownTime] = useState(0);
+    // const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
+    // const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
+    // const [countdownTime, setCountdownTime] = useState(0);
 
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [locationsArr, setLocationsArr] = useState([]);
@@ -120,7 +120,7 @@ const App = () => {
             } else { // else success
                 setView('vote');
                 setRoomChat(prev => [...prev, response.message]);
-                setVoteCountdownTargetDate(new Date(response.endDate));
+                // setVoteCountdownTargetDate(new Date(response.endDate));
             }
         });
     };
@@ -160,30 +160,31 @@ const App = () => {
             
         } catch (error) {
             console.log("Unable to get locations. Server might not be online. " + error.message);
+            alert("Unable to get locations. Server might not be online. " + error.message);
         }
     }, []);
 
     // vote countdown timer effect
-    useEffect(() => {
-        const startSec = Math.floor((voteCountdownTargetDate - new Date()) / 1000);
-        setCountdownTime(startSec);
-        const timer = setInterval(() => {
-            setCountdownTime(countdownTime - 1);
-        }, 1000);
+    // useEffect(() => {
+    //     const startSec = Math.floor((voteCountdownTargetDate - new Date()) / 1000);
+    //     setCountdownTime(startSec);
+    //     const timer = setInterval(() => {
+    //         setCountdownTime(countdownTime - 1);
+    //     }, 1000);
 
-        return () => clearInterval(timer); // Cleanup on unmount
-    }, [voteCountdownTargetDate]);
+    //     return () => clearInterval(timer); // Cleanup on unmount
+    // }, [voteCountdownTargetDate]);
 
     // game countdown timer effect
-    useEffect(() => {
-        const startSec = Math.floor((gameCountdownTargetDate - new Date()) / 1000);
-        setCountdownTime(startSec);
-        const timer = setInterval(() => {
-            setCountdownTime(countdownTime - 1);
-        }, 1000);
+    // useEffect(() => {
+    //     const startSec = Math.floor((gameCountdownTargetDate - new Date()) / 1000);
+    //     setCountdownTime(startSec);
+    //     const timer = setInterval(() => {
+    //         setCountdownTime(countdownTime - 1);
+    //     }, 1000);
 
-        return () => clearInterval(timer); // Cleanup on unmount
-    }, [gameCountdownTargetDate]);
+    //     return () => clearInterval(timer); // Cleanup on unmount
+    // }, [gameCountdownTargetDate]);
 
     //on first mount, setup socket event listeners
     useEffect(() => {
@@ -197,9 +198,14 @@ const App = () => {
                     setRoomChat(prev => [...prev, data.message]);
                     break;
                 case 'gameStarted':
-                    setView('in-progress');
-                    setRoomChat(prev => [...prev, data.message]);
-                    setGameCountdownTargetDate(new Date(data.endDate));
+                    setView('revealrole');
+                    const to = setTimeout(() => {
+                        clearTimeout(to);
+                        setView('in-progress');
+                        setRoomChat(prev => [...prev, data.message]);
+
+                    }, 5000); // wait 5 seconds before switching to in-progress
+                    // setGameCountdownTargetDate(new Date(data.endDate));
                     break;
                 case 'roleAssigned':
                     setRole(data.role);
@@ -210,7 +216,7 @@ const App = () => {
                 case 'voteCalled':
                     setView('vote');
                     setRoomChat(prev => [...prev, data.message]);
-                    setVoteCountdownTargetDate(new Date(data.endDate));
+                    // setVoteCountdownTargetDate(new Date(data.endDate));
                     break;
                 case 'resetRoom':
                     setView('room');
@@ -282,26 +288,39 @@ const App = () => {
             case 'room': 
                 return <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 lg:mx-auto">
                     <PlayerContext.Provider value={{roomCode, playerName}}>
+
                             {/* Left Column: action card */}
                         <div className="col-span-1 space-y-6">
                             <button onClick={() => {leaveRoom(roomCode, playerCode);
                             }} // wait for leftRoom handler to get response
                                 className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
                                 py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                                </svg>
                                 Leave Room
                             </button>
                             <div className="text-center mb-6">
                                 <p className="text-gray-600 dark:text-gray-400">Room Code</p>
                                 <h2 className="text-5xl font-extrabold tracking-widest text-baby-blue-600 dark:text-baby-blue-400 select-all">{roomCode}</h2>
                                 <p className="text-gray-500 dark:text-gray-500 mt-2">Share this code with your friends!</p>
+                                <button onClick={() => {navigator.clipboard.writeText(roomCode);}}
+                                    className="mt-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                                    py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                                    </svg>
+                                </button>
                             </div>
                             
-                            <ActionsCard timeLeft={countdownTime} playerList={playerList} onStartGame={startGame}/>
+                            <ActionsCard playerList={playerList} onStartGame={startGame}/>
                         </div>
+
                             {/* Middle Column: RoomChatHistory (middle) */}
                         <div className="col-span-1 lg:col-span-3 space-y-6">
                             <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
                         </div>
+
                             {/* Second row */}
                         <div className="col-span-1 lg:col-span-2 lg:col-start-2 space-y-6">
                             <LocationsCard locationsArr={locationsArr}/>
@@ -321,13 +340,15 @@ const App = () => {
                                 Leave Room
                             </button>
                             <PlayerCard location={location} role={role}/>
-                            <ActionsCard timeLeft={countdownTime} playerList={playerList} onStartGame={startGame}/>
+                            <ActionsCard playerList={playerList} onStartGame={startGame}/>
                         </div>
+
                             {/* Middle Column: RoomChatHistory (middle) */}
                         <div className="col-span-1 lg:col-span-3 space-y-6">
                             <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
                         </div>
-                            {/* Right Column: Locations card (right) */}
+
+                            {/* Second row */}
                         <div className="col-span-1 lg:col-span-2 lg:col-start-2 space-y-6">
                             <LocationsCard locationsArr={locationsArr}/>
                         </div>
