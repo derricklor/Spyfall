@@ -23,6 +23,7 @@ const App = () => {
     // const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
     // const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
     // const [countdownTime, setCountdownTime] = useState(0);
+    const [isCodeCopied, setIsCodeCopied] = useState(false);
 
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [locationsArr, setLocationsArr] = useState([]);
@@ -148,6 +149,7 @@ const App = () => {
         });
     };
 
+    
 
     useEffect(() => {
         playerNameRef.current = playerName;
@@ -280,7 +282,7 @@ const App = () => {
        
         switch(view) {
             case 'lobby':
-                return <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4">
+                return <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
                     <PlayerContext.Provider value={{ playerName, setPlayerName,  roomCode, setRoomCode }}> {/*pass as object */}
                         <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} />
                     </PlayerContext.Provider>
@@ -291,27 +293,39 @@ const App = () => {
 
                             {/* Left Column: action card */}
                         <div className="col-span-1 space-y-6">
-                            <button onClick={() => {leaveRoom(roomCode, playerCode);
-                            }} // wait for leftRoom handler to get response
-                                className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                            <button onClick={() => {leaveRoom(roomCode, playerCode); }} // wait for leftRoom handler to get response
+                                className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
                                 py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
                                 </svg>
                                 Leave Room
                             </button>
-                            <div className="text-center mb-6">
+                            <div className="text-center">
+
                                 <p className="text-gray-600 dark:text-gray-400">Room Code</p>
-                                <h2 className="text-5xl font-extrabold tracking-widest text-baby-blue-600 dark:text-baby-blue-400 select-all">{roomCode}</h2>
-                                <p className="text-gray-500 dark:text-gray-500 mt-2">Share this code with your friends!</p>
-                                <button onClick={() => {navigator.clipboard.writeText(roomCode);}}
-                                    className="mt-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
-                                    py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
-                                    </svg>
-                                </button>
+                                <div className="flex items-center justify-center gap-2">
+
+                                    <h2 id='roomCodeText' className="text-5xl font-extrabold text-cyan-600 dark:text-cyan-400 select-all">{roomCode}</h2>
+                                    <button onClick={() => {
+                                        navigator.clipboard.writeText(roomCode);
+                                        setIsCodeCopied(true);
+                                        setTimeout(() => setIsCodeCopied(false), 3000);
+                                    }}
+                                    className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                                    py-2 px-2 rounded-lg font-medium transition duration-200 shadow-md">
+                                        {isCodeCopied ?
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75" /></svg>
+                                            :
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+                                        }
+                                    </button>
+                                </div>
+                                <span className="text-gray-500 dark:text-gray-500 mt-2">Share this code with your friends!</span>
                             </div>
+                            
                             
                             <ActionsCard playerList={playerList} onStartGame={startGame}/>
                         </div>

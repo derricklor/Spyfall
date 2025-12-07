@@ -234,11 +234,11 @@ io.on('connection', (socket) => {
 
     //handle chat message from room
     socket.on('chatMessage', withErrorHandling(async ({roomCode, playerCode, message}, callback) => {
-        //check if roomCode and player exists
-        
+        //check if roomCode and player exists if no room or player is found, getroomAndPlayer will 
+        //throw an error and be caught by withErrorHandling, which sends error message to client using the callback
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
-        //emit to everyone in room except sender, use generic annoucement type
-        socket.to(roomCode).emit('message', { type: 'announcement', message: `${player.name}: ${message}`});
+        //broadcast emits to everyone in room except sender, use generic annoucement type
+        socket.broadcast.to(roomCode).emit('message', { type: 'announcement', message: `${player.name}: ${message}`});
         //send callback acknowledgement success or error
         callback({status: 'success'});
     }));
@@ -395,10 +395,11 @@ io.on('connection', (socket) => {
             //callback event to joining player with room and player info
             callback({ status: 'success', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerName: playerName, playerCode: playerCode, playerList: playerList });
             // Notify all other clients in the room about the joining player
-            // specifically socket.to(room), sends to all sockets in room except sender
-            socket.to(roomCode).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 
+            // specifically .broadcast, sends to all sockets in .to(room) except sender
+            socket.broadcast.to(roomCode).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
         } else {
+            //handle room not found
             callback({ status: 'error', message: `Room ${roomCode} not found.` });
         }
     }));

@@ -22,7 +22,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
                         className="p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 rounded-lg text-black dark:text-white"
                     />
                     <button onClick={() => onCreateRoom(playerContextObj.playerName)} // anonymous function to pass name value
-                        className={`flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
+                        className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
                         shadow-md ${!playerContextObj.playerName ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
                         disabled={!playerContextObj.playerName}>
                         Create Room
@@ -48,7 +48,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
                         className="p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 rounded-lg text-black dark:text-white"
                     />
                     <button onClick={() => { onJoinRoom(playerContextObj.roomCode, playerContextObj.playerName); }} // anonymous function to pass name and code values
-                        className={`flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
+                        className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
                             shadow-md ${(playerContextObj.roomCode.length !== 4) || (!playerContextObj.playerName) ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
                         disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName} >
                         Join Room
