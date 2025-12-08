@@ -59,6 +59,8 @@ function generateCode(length) {
     }
     return code;
 }
+// allow serve static files from public directory
+app.use(express.static('public'));
 
 app.get('/api/locations', async (req, res) => {
     try {
@@ -71,20 +73,25 @@ app.get('/api/locations', async (req, res) => {
     }
 });
 
-app.get('/api/location/:id', async (req, res) => {
-    try {
-        const location = await Location.findById(req.params.id);
-        if (location) {
-            serverLog(`Fetched location with ID: ${req.params.id}`);
-            res.status(200).json(location);
-        } else {
-            serverLog(`Location with ID: ${req.params.id} not found.`);
-            res.status(404).json({ error: 'Location not found' });
-        }
-    } catch (error) {
-        serverLog(`Error fetching location: ${error.message}`);
-        res.status(500).json({ error: 'Error fetching location' });
-    }
+// set up a public endpoint to serve location images
+app.get('/api/location/:name', async (req, res) => {
+    //find the requested location image and return it
+
+    //check if the location name is valid
+
+    // try {
+    //     const location = await Location.findById(req.params.id);
+    //     if (location) {
+    //         serverLog(`Fetched location with ID: ${req.params.id}`);
+    //         res.status(200).json(location);
+    //     } else {
+    //         serverLog(`Location with ID: ${req.params.id} not found.`);
+    //         res.status(404).json({ error: 'Location not found' });
+    //     }
+    // } catch (error) {
+    //     serverLog(`Error fetching location: ${error.message}`);
+    //     res.status(500).json({ error: 'Error fetching location' });
+    // }
 });
 
 

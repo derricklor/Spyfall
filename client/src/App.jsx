@@ -337,7 +337,7 @@ const App = () => {
 
                             {/* Second row */}
                         <div className="col-span-1 lg:col-span-2 lg:col-start-2 space-y-6">
-                            <LocationsCard locationsArr={locationsArr}/>
+                            <LocationsCard locationsArr={locationsArr} serverURL={URL}/>
                         </div>
                     </PlayerContext.Provider>
                 </div>
@@ -364,7 +364,7 @@ const App = () => {
 
                             {/* Second row */}
                         <div className="col-span-1 lg:col-span-2 lg:col-start-2 space-y-6">
-                            <LocationsCard locationsArr={locationsArr}/>
+                            <LocationsCard locationsArr={locationsArr} serverURL={URL}/>
                         </div>
                     </PlayerContext.Provider>
                 </div>
