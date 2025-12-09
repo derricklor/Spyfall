@@ -59,7 +59,7 @@ function generateCode(length) {
     }
     return code;
 }
-// allow serve static files from public directory
+// allow serving of static files from public directory
 app.use(express.static('public'));
 
 app.get('/api/locations', async (req, res) => {
