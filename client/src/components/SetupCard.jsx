@@ -8,8 +8,78 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
     // has properties from closest parent context: playerName, setPlayerName, roomCode, setRoomCode
     const playerContextObj = useContext(PlayerContext); 
     
+    const onPasteCode = (e) => {
+        e.preventDefault();
+        //check if pasted data exists
+        if (!e.clipboardData.getData('text')) return;
+        let pasteData = e.clipboardData.getData('text').trim();
+        //limit to 4 characters (could have < 4 characters), convert to uppercase, then convert to array
+        pasteData = pasteData.slice(0,4).toUpperCase().split('');
+
+        let regex = /^[a-zA-Z0-9]?$/; //alphanumeric only
+        //loop through pasteData to validate each character, skip invalid characters
+        pasteData = pasteData.filter(char => { return char.match(regex); });
+        
+        let code = '';
+        // all or nothing paste logic, any unfilled inputs are considered empty
+        // clear all input boxes first
+        for (let i = 0; i < 4; i++) {
+            let inputBox = document.getElementById(`code${i+1}`);
+            if (inputBox) {
+                inputBox.value = '';
+            }
+        }
+        //replace 4 inputs with chars of pasted data
+        for (let i = 0; i < pasteData.length; i++) { 
+            let inputBox = document.getElementById(`code${i+1}`);
+            if (inputBox) {
+                inputBox.value = pasteData[i];
+                code += pasteData[i];
+            }
+        }
+        //focus on next input box after pasted data
+        if (pasteData.length < 4) {
+            document.getElementById(`code${pasteData.length + 1}`).focus();
+        } else {
+            document.getElementById('code4').focus();
+        }
+        playerContextObj.setRoomCode(code);
+    };
+
+    //logic for handling every key up input for room code
+    const onKeyUpCode = (e) => {
+        const value = e.target.value.toUpperCase(); //convert to uppercase
+        e.target.value = value; //set the input box value to uppercase
+        //validate input to be alphanumeric only
+        let regex = /^[A-Z0-9]?$/; // single or no character alphanumeric matched at beginning and end
+        if (!value.match(regex)) {
+            e.target.value = ''; //clear invalid input
+            return;
+        }
+        const nextInput = e.target.getAttribute('nextinput');
+        const prevInput = e.target.getAttribute('previnput');
+
+        //handle if event is backspace or normal input
+        if (e.key === 'Backspace' && !value && prevInput) {
+            document.getElementById(prevInput).focus();
+            document.getElementById(prevInput).value = '';
+        } else if (value && nextInput) {
+            document.getElementById(nextInput).focus();
+        }
+
+        // Update room code in context
+        let code = '';
+        for (let i = 1; i <= 4; i++) {
+            let inputVal = document.getElementById(`code${i}`).value;
+            inputVal = inputVal.toUpperCase();
+            code += inputVal ? inputVal : '';
+        }
+        playerContextObj.setRoomCode(code);
+    };
+
+
     return (
-        <Card title="" className="p-6 h-full flex flex-col space-y-8">
+        <Card title="" className="p-6 h-full flex flex-col space-y-4">
             <div className="space-y-4 pt-4 pb-8 border-b border-gray-900 dark:border-gray-700">
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-black dark:text-gray-300">Welcome!</h2>
@@ -19,17 +89,10 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
                     <input type="text" placeholder="Your Name" id='name'
                         value={playerContextObj.playerName} maxLength={20}
                         onChange={(e) => playerContextObj.setPlayerName(e.target.value)}
-                        className="p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 rounded-lg text-black dark:text-white"
+                        className="p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 
+                            rounded-lg text-black dark:text-white w-full"
                     />
-                    <button onClick={() => onCreateRoom(playerContextObj.playerName)} // anonymous function to pass name value
-                        className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
-                        shadow-md ${!playerContextObj.playerName ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
-                        disabled={!playerContextObj.playerName}>
-                        Create Room
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                    </button>
+                    
                 </div>
             </div>
 
@@ -41,24 +104,51 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
                 <div className="text-center mb-8">
                     <p className="text-black dark:text-gray-300 mt-2">Join with Code</p>
                 </div>
-                <div className="flex justify-center gap-4">
-                    <input type="text" maxLength="4" placeholder="0000" id='code'
-                        value={playerContextObj.roomCode}
-                        onChange={(e) => playerContextObj.setRoomCode(e.target.value.toUpperCase())}
-                        className="p-3 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 rounded-lg text-black dark:text-white"
-                    />
-                    <button onClick={() => { onJoinRoom(playerContextObj.roomCode, playerContextObj.playerName); }} // anonymous function to pass name and code values
-                        className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
-                            shadow-md ${(playerContextObj.roomCode.length !== 4) || (!playerContextObj.playerName) ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
-                        disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName} >
-                        Join Room
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
-                        </svg>
-
-
-                    </button>
+                <div className="flex justify-center gap-2">
+                    <div>
+                        <input type="text" maxLength="1" pattern="/^[a-zA-Z0-9]?$/" id='code1' nextinput='code2' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
+                            className="h-10 w-10 p-2 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 
+                            rounded-lg text-black dark:text-white text-center"/>
+                    </div>
+                    <div>
+                        <input type="text" maxLength="1" pattern="/^[a-zA-Z0-9]?$/" id='code2' nextinput='code3' previnput='code1' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
+                            className="h-10 w-10 p-2 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 
+                            rounded-lg text-black dark:text-white text-center"/>
+                    </div>
+                    <div>
+                        <input type="text" maxLength="1" pattern="/^[a-zA-Z0-9]?$/" id='code3' nextinput='code4' previnput='code2' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
+                            className="h-10 w-10 p-2 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 
+                            rounded-lg text-black dark:text-white text-center"/>
+                    </div>
+                    <div>
+                        <input type="text" maxLength="1" pattern="/^[a-zA-Z0-9]?$/" id='code4' previnput='code3' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
+                            className="h-10 w-10 p-2 bg-gray-200 dark:bg-gray-700 border border-gray-900 dark:border-gray-600 
+                            rounded-lg text-black dark:text-white text-center"/>
+                    </div>
+                    
+                   
                 </div>
+            </div>
+
+            <div className="flex gap-2">
+                <button onClick={() => onCreateRoom(playerContextObj.playerName)} // anonymous function to pass name value
+                    className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
+                        shadow-md ${!playerContextObj.playerName ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
+                    disabled={!playerContextObj.playerName}>
+                    Create Room
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                </button>
+                <button onClick={() => { onJoinRoom(playerContextObj.roomCode, playerContextObj.playerName); }} // anonymous function to pass name and code values
+                    className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-lg font-medium transition duration-200 
+                            shadow-md ${(playerContextObj.roomCode.length !== 4) || (!playerContextObj.playerName) ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer'}`}
+                    disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName} >
+                    Join Room
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
+                    </svg>
+                </button>
             </div>
 
         </Card>
