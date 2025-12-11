@@ -32,6 +32,7 @@ const App = () => {
     const [playerName, setPlayerName] = useState('');
     const [playerCode, setPlayerCode] = useState('');
     const [roomCode, setRoomCode] = useState('');
+    const [invalidRoomCode, setInvalidRoomCode] = useState(false);
     const [role, setRole] = useState(''); // player's role
     const [location, setLocation] = useState(''); // player's location
     const playerNameRef = useRef(playerName);
@@ -65,7 +66,7 @@ const App = () => {
         socket.emit('joinRoom', { roomCode, inputName }, function(response) {
             if (response.status !== 'success') {
                 console.error("Error joining room. " + response.message);
-                alert("Error joining room. Please try again. " + response.message);
+                setInvalidRoomCode(true);
             } else { // else success
                 setView('room');
                 setPlayerName(response.playerName); //returned name could be different
@@ -73,6 +74,7 @@ const App = () => {
                 setRoomCode(response.roomCode);
                 setPlayerCode(response.playerCode);
                 setPlayerList(response.playerList);
+                setInvalidRoomCode(false);
             }
         });
     };
@@ -284,7 +286,7 @@ const App = () => {
             case 'lobby':
                 return <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
                     <PlayerContext.Provider value={{ playerName, setPlayerName,  roomCode, setRoomCode }}> {/*pass as object */}
-                        <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} />
+                        <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} invalidRoomCode={invalidRoomCode} setInvalidRoomCode={setInvalidRoomCode}/>
                     </PlayerContext.Provider>
                 </div>
             case 'room': 
@@ -380,7 +382,7 @@ const App = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-300 dark:bg-gray-900 text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4">
+        <div className="min-h-screen bg-gray-300 dark:bg-gray-900 text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4 transition duration-500">
             <div className='fixed top-0 flex w-full bg-cyan-500 dark:bg-cyan-900 shadow-xl p-4 items-center justify-between'>
                 <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
                 <button className="rounded-l" onClick={toggleTheme}>
