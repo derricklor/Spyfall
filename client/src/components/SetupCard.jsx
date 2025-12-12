@@ -8,6 +8,15 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
     // has properties from closest parent context: playerName, setPlayerName, roomCode, setRoomCode
     const playerContextObj = useContext(PlayerContext); 
 
+    //if roomCode exists in context, populate the input boxes
+    useEffect(() => {
+        if (playerContextObj.roomCode && playerContextObj.roomCode.length === 4) {
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`code${i+1}`).value = playerContextObj.roomCode[i];
+            }
+        }
+    }, []); //run only on initial render
+
     //mark code input boxes invalid if invalidRoomCode prop is true
     useEffect(() => {
         const codebox = document.getElementById('codebox');

@@ -9,6 +9,8 @@ import ActionsCard from './components/ActionsCard';
 import RoomChatCard from './components/RoomChatCard';
 import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
+import RevealRoleCard from './components/RevealRoleCard';
+import LoadingCard from './components/LoadingCard';
 
 import { io } from 'socket.io-client';
 
@@ -17,8 +19,9 @@ const socket = io(URL);
 
 // --- Main App Component ---
 const App = () => {
-    const [view, setView] = useState('lobby'); // 'lobby', 'room', 'revealrole','in-progress','vote'
+    const [view, setView] = useState('lobby'); // 'lobby' || 'room' || 'revealrole' ||'in-progress' ||'vote' || 'loading'
     const [theme, setTheme] = useState('dark');
+    const [loadingMessage, setLoadingMessage] = useState('');
 
     // const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
     // const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
@@ -32,7 +35,8 @@ const App = () => {
     const [playerName, setPlayerName] = useState('');
     const [playerCode, setPlayerCode] = useState('');
     const [roomCode, setRoomCode] = useState('');
-    const [invalidRoomCode, setInvalidRoomCode] = useState(false);
+
+    const [invalidRoomCode, setInvalidRoomCode] = useState(false); // change to general setup error e.g. unable to create room || invalid room code
     const [role, setRole] = useState(''); // player's role
     const [location, setLocation] = useState(''); // player's location
     const playerNameRef = useRef(playerName);
@@ -49,10 +53,13 @@ const App = () => {
     }
 
     const createRoom = () => {
+        setView('loading');
+        setLoadingMessage("Creating room...");
         socket.emit('createRoom', function(response) {
             if (response.status !== 'success') {
                 console.error("Error creating room.");
                 alert("Error creating room. Please try again.");
+                setView('lobby');
             } else { // else success
                 //get room code from server, then emit joinRoom to server
                 setRoomCode(response.roomCode);
@@ -63,10 +70,13 @@ const App = () => {
     };
 
     const joinRoom = (roomCode, inputName) => {
+        setView('loading');
+        setLoadingMessage("Joining room...");
         socket.emit('joinRoom', { roomCode, inputName }, function(response) {
             if (response.status !== 'success') {
                 console.error("Error joining room. " + response.message);
                 setInvalidRoomCode(true);
+                setView('lobby');
             } else { // else success
                 setView('room');
                 setPlayerName(response.playerName); //returned name could be different
@@ -202,20 +212,13 @@ const App = () => {
                     setRoomChat(prev => [...prev, data.message]);
                     break;
                 case 'gameStarted':
-                    setView('revealrole');
-                    const to = setTimeout(() => {
-                        clearTimeout(to);
-                        setView('in-progress');
-                        setRoomChat(prev => [...prev, data.message]);
-
-                    }, 5000); // wait 5 seconds before switching to in-progress
-                    // setGameCountdownTargetDate(new Date(data.endDate));
+                    setView('loading');
+                    setLoadingMessage("Assigning roles...");
                     break;
                 case 'roleAssigned':
                     setRole(data.role);
                     setLocation(data.location);
-                    //popup alert to show role and location
-                    alert(`Your role is: ${role}\nYour location is: ${location}`);
+                    setView('revealrole');
                     break;
                 case 'voteCalled':
                     setView('vote');
@@ -284,11 +287,15 @@ const App = () => {
        
         switch(view) {
             case 'lobby':
-                return <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
-                    <PlayerContext.Provider value={{ playerName, setPlayerName,  roomCode, setRoomCode }}> {/*pass as object */}
-                        <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} invalidRoomCode={invalidRoomCode} setInvalidRoomCode={setInvalidRoomCode}/>
-                    </PlayerContext.Provider>
-                </div>
+                return (
+                    <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
+                        <PlayerContext.Provider value={{ playerName, setPlayerName, roomCode, setRoomCode }}>
+                            <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} invalidRoomCode={invalidRoomCode} setInvalidRoomCode={setInvalidRoomCode} />
+                        </PlayerContext.Provider>
+                    </div>
+                );
+            case 'loading':
+                return <LoadingCard message={loadingMessage} />;
             case 'room': 
                 return <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 lg:mx-auto">
                     <PlayerContext.Provider value={{roomCode, playerName}}>
@@ -343,6 +350,12 @@ const App = () => {
                         </div>
                     </PlayerContext.Provider>
                 </div>
+                case 'revealrole':
+                    return (
+                        <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto ">
+                            <RevealRoleCard role={role} location={location} />
+                        </div>
+                    );
             case 'in-progress':
                 return <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 lg:mx-auto">
                     <PlayerContext.Provider value={{roomCode, playerName}}>
@@ -385,6 +398,12 @@ const App = () => {
         <div className="min-h-screen bg-gray-300 dark:bg-gray-900 text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4 transition duration-500">
             <div className='fixed top-0 flex w-full bg-cyan-500 dark:bg-cyan-900 shadow-xl p-4 items-center justify-between'>
                 <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => {
+                    if (view === "lobby")
+                        setView("revealrole")
+                    if (view === "revealrole")
+                        setView("lobby")
+                    }}>reveal role view</button>
                 <button className="rounded-l" onClick={toggleTheme}>
                     {theme === 'dark' ?
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
