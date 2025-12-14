@@ -99,7 +99,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
 
 
     return (
-        <Card title="" className="p-6 h-full flex flex-col space-y-4 transition duration-500">
+        <Card title="" className="p-6 mt-6 h-full flex flex-col space-y-4 transition duration-500">
             <div className="space-y-4 pt-4 pb-8 border-b border-gray-900 dark:border-gray-700">
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-black dark:text-gray-300">Welcome!</h2>
