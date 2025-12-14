@@ -45,10 +45,10 @@ const App = () => {
     const sendChatMessage = (message) => {
         socket.timeout(TIMEOUT_MS).emit("chatMessage", { roomCode, playerCode, message }, (err, response) => {
             if (err) {  //server did not acknowledge in time
-                setRoomChat(prev => [...prev, "*Socket timeout sending previous message*"]);
-                console.error("Error: Socket timout. Server did not respond in time.");
+                console.error("Socket timeout sending chat message. Server did not respond in time.");
+                setRoomChat(prev => [...prev, "*Socket timeout. Your message was not sent*"]);
             } else if (response.status !== 'success') { // server replied with error
-                setRoomChat(prev => [...prev, "*Error sending previous message*"]);
+                setRoomChat(prev => [...prev, "*Serve side error sending previous message*"]);
             } else {// else success and update roomchat
                 setRoomChat(prev => [...prev, playerNameRef.current + ": " + message]);
             }
@@ -60,8 +60,8 @@ const App = () => {
         setLoadingMessage("Creating room...");
         socket.timeout(TIMEOUT_MS).emit("createRoom", (err, response) => {
             if (err) {  //server did not acknowledge in time
-                console.error("Socket timeout. Server did not respond in time.");
-                console.alert("Socket timeout error. Please try again later.");
+                console.error("Socket timeout creating room. Server did not respond in time.");
+                alert("Socket timeout error while creating room. Please try again later.");
                 setView('lobby');
             } else if (response.status !== 'success') {
                 console.error("Error creating room.");
@@ -81,8 +81,8 @@ const App = () => {
         setLoadingMessage("Joining room...");
         socket.timeout(TIMEOUT_MS).emit("joinRoom", { roomCode, inputName }, (err, response) => {
             if (err) {  //server did not acknowledge in time
-                console.error("Socket timeout. Server did not respond in time.");
-                console.alert("Socket timeout error. Please try again later.");
+                console.error("Socket timeout joining room. Server did not respond in time.");
+                alert("Socket timeout error while joining room. Please try again later.");
                 setView('lobby');
             } else if (response.status !== 'success') {
                 console.error("Error joining room. " + response.message);
@@ -102,7 +102,10 @@ const App = () => {
 
     const leaveRoom = (roomCode, playerCode) => {
         socket.timeout(TIMEOUT_MS).emit("leaveRoom", { roomCode, playerCode }, (err, response) => {
-            if (response.status !== 'success') {
+            if (err) {
+                console.error("Socket timeout leaving room. Server did not respond in time.");
+                alert("Socket timeout error while leaving room. Please try again later.");
+            } else if (response.status !== 'success') {
                 console.error("Error leaving room. " + response.message);
                 setRoomChat(prev => [...prev, "Error leaving room. " + response.message]);
             } else { // else success
@@ -115,7 +118,11 @@ const App = () => {
 
     const startGame = (roomCode, playerCode) => {
         socket.timeout(TIMEOUT_MS).emit("startGame", { roomCode, playerCode }, (err, response) =>{
-            if (response.status !== 'success') {
+            if (err) {
+                console.error("Socket timeout starting game. Server did not respond in time.");
+                alert("Error starting game: Server did not respond. Please try again later.");
+                setRoomChat(prev => [...prev, "Error: Could not start game. The server did not respond."]);
+            } else if (response.status !== 'success') {
                 console.error("Error starting game. " + response.message);
                 setRoomChat(prev => [...prev, "Error starting game. " + response.message]);
             } else { // else success
@@ -127,7 +134,11 @@ const App = () => {
 
     const vote = (roomCode, playerCode, votedFor) => {
         socket.timeout(TIMEOUT_MS).emit("vote", { roomCode, playerCode, votedFor }, (err, response) => {
-            if (response.status !== 'success') {
+            if (err) {
+                console.error("Socket timeout submitting vote. Server did not respond in time.");
+                alert("Error submitting vote: Server did not respond. Please try again later.");
+                setRoomChat(prev => [...prev, "Error: Could not submit vote. The server did not respond."]);
+            } else if (response.status !== 'success') {
                 console.error("Error submitting vote. " + response.message);
                 setRoomChat(prev => [...prev, "Error submitting vote. " + response.message]);
             } else { // else success
@@ -138,7 +149,11 @@ const App = () => {
 
     const callVote = (roomCode, playerCode) => {
         socket.timeout(TIMEOUT_MS).emit("callVote", { roomCode, playerCode }, (err, response) => {
-            if (response.status !== 'success') {
+            if (err) {
+                console.error("Socket timeout calling vote. Server did not respond in time.");
+                alert("Error calling vote: Server did not respond. Please try again later.");
+                setRoomChat(prev => [...prev, "Error: Could not call vote. The server did not respond."]);
+            } else if (response.status !== 'success') {
                 console.error("Error calling vote.");
                 setRoomChat(prev => [...prev, response.message]);
             } else { // else success
@@ -151,7 +166,11 @@ const App = () => {
 
     const spyGuessLocation = (roomCode, playerCode, guessedLocation) => {
         socket.timeout(TIMEOUT_MS).emit("spyGuessLocation", { roomCode, playerCode, guessedLocation }, (err, response) => {
-            if (response.status !== 'success') {
+            if (err) {
+                console.error("Socket timeout submitting location guess. Server did not respond in time.");
+                alert("Error submitting location guess: Server did not respond. Please try again later.");
+                setRoomChat(prev => [...prev, "Error: Could not submit location guess. The server did not respond."]);
+            } else if (response.status !== 'success') {
                 console.error("Error submitting location guess. " + response.message);
                 setRoomChat(prev => [...prev, "Error submitting location guess. " + response.message]);
             } else { // else success
@@ -163,7 +182,10 @@ const App = () => {
 
     const getLocations = () => {
         socket.timeout(TIMEOUT_MS).emit('getLocations', (err, response) => {
-            if (response.status !== 'success') {
+            if (err) {
+                console.error("Socket timeout fetching locations. Server did not respond in time.");
+                alert("Error fetching locations: Server did not respond. Please try again later.");
+            } else if (response.status !== 'success') {
                 console.error("Error fetching locations.");
                 alert("Error fetching locations. Please try again.");
             } else { // else success
@@ -409,12 +431,15 @@ const App = () => {
         <div className="min-h-screen bg-gray-300 dark:bg-gray-900 text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4 transition duration-500">
             <div className='fixed top-0 flex w-full bg-cyan-500 dark:bg-cyan-900 shadow-xl p-4 items-center justify-between'>
                 <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => {
-                    if (view === "lobby")
-                        setView("revealrole")
-                    if (view === "revealrole")
-                        setView("lobby")
-                    }}>reveal role view</button>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("lobby") }}
+                    >show lobby view
+                </button>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("revealrole") }}>
+                    show reveal role view
+                </button>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("loading"); setLoadingMessage("test message..."); }}
+                    >show loading view
+                </button>
                 <button className="rounded-l" onClick={toggleTheme}>
                     {theme === 'dark' ?
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
