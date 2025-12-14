@@ -16,6 +16,7 @@ import { io } from 'socket.io-client';
 
 const URL = 'http://localhost:3000';
 const socket = io(URL);
+const TIMEOUT_MS = 5000;
 
 // --- Main App Component ---
 const App = () => {
@@ -42,9 +43,11 @@ const App = () => {
     const playerNameRef = useRef(playerName);
 
     const sendChatMessage = (message) => {
-        socket.emit('chatMessage', { roomCode, playerCode, message }, response => {
-            if (response.status !== 'success') {
-                // mark message as failed to send
+        socket.timeout(TIMEOUT_MS).emit("chatMessage", { roomCode, playerCode, message }, (err, response) => {
+            if (err) {  //server did not acknowledge in time
+                setRoomChat(prev => [...prev, "*Socket timeout sending previous message*"]);
+                console.error("Error: Socket timout. Server did not respond in time.");
+            } else if (response.status !== 'success') { // server replied with error
                 setRoomChat(prev => [...prev, "*Error sending previous message*"]);
             } else {// else success and update roomchat
                 setRoomChat(prev => [...prev, playerNameRef.current + ": " + message]);
@@ -55,8 +58,12 @@ const App = () => {
     const createRoom = () => {
         setView('loading');
         setLoadingMessage("Creating room...");
-        socket.emit('createRoom', function(response) {
-            if (response.status !== 'success') {
+        socket.timeout(TIMEOUT_MS).emit("createRoom", (err, response) => {
+            if (err) {  //server did not acknowledge in time
+                console.error("Socket timeout. Server did not respond in time.");
+                console.alert("Socket timeout error. Please try again later.");
+                setView('lobby');
+            } else if (response.status !== 'success') {
                 console.error("Error creating room.");
                 alert("Error creating room. Please try again.");
                 setView('lobby');
@@ -72,8 +79,12 @@ const App = () => {
     const joinRoom = (roomCode, inputName) => {
         setView('loading');
         setLoadingMessage("Joining room...");
-        socket.emit('joinRoom', { roomCode, inputName }, function(response) {
-            if (response.status !== 'success') {
+        socket.timeout(TIMEOUT_MS).emit("joinRoom", { roomCode, inputName }, (err, response) => {
+            if (err) {  //server did not acknowledge in time
+                console.error("Socket timeout. Server did not respond in time.");
+                console.alert("Socket timeout error. Please try again later.");
+                setView('lobby');
+            } else if (response.status !== 'success') {
                 console.error("Error joining room. " + response.message);
                 setInvalidRoomCode(true);
                 setView('lobby');
@@ -90,7 +101,7 @@ const App = () => {
     };
 
     const leaveRoom = (roomCode, playerCode) => {
-        socket.emit('leaveRoom', { roomCode, playerCode }, function(response) {
+        socket.timeout(TIMEOUT_MS).emit("leaveRoom", { roomCode, playerCode }, (err, response) => {
             if (response.status !== 'success') {
                 console.error("Error leaving room. " + response.message);
                 setRoomChat(prev => [...prev, "Error leaving room. " + response.message]);
@@ -103,7 +114,7 @@ const App = () => {
     }
 
     const startGame = (roomCode, playerCode) => {
-        socket.emit('startGame', { roomCode, playerCode }, function(response) {
+        socket.timeout(TIMEOUT_MS).emit("startGame", { roomCode, playerCode }, (err, response) =>{
             if (response.status !== 'success') {
                 console.error("Error starting game. " + response.message);
                 setRoomChat(prev => [...prev, "Error starting game. " + response.message]);
@@ -115,7 +126,7 @@ const App = () => {
     };
 
     const vote = (roomCode, playerCode, votedFor) => {
-        socket.emit('vote', { roomCode, playerCode, votedFor }, function(response) {
+        socket.timeout(TIMEOUT_MS).emit("vote", { roomCode, playerCode, votedFor }, (err, response) => {
             if (response.status !== 'success') {
                 console.error("Error submitting vote. " + response.message);
                 setRoomChat(prev => [...prev, "Error submitting vote. " + response.message]);
@@ -126,7 +137,7 @@ const App = () => {
     };
 
     const callVote = (roomCode, playerCode) => {
-        socket.emit('callVote', { roomCode, playerCode }, function(response) {
+        socket.timeout(TIMEOUT_MS).emit("callVote", { roomCode, playerCode }, (err, response) => {
             if (response.status !== 'success') {
                 console.error("Error calling vote.");
                 setRoomChat(prev => [...prev, response.message]);
@@ -139,7 +150,7 @@ const App = () => {
     };
 
     const spyGuessLocation = (roomCode, playerCode, guessedLocation) => {
-        socket.emit('spyGuessLocation', { roomCode, playerCode, guessedLocation }, function(response) {
+        socket.timeout(TIMEOUT_MS).emit("spyGuessLocation", { roomCode, playerCode, guessedLocation }, (err, response) => {
             if (response.status !== 'success') {
                 console.error("Error submitting location guess. " + response.message);
                 setRoomChat(prev => [...prev, "Error submitting location guess. " + response.message]);
@@ -151,7 +162,7 @@ const App = () => {
     };
 
     const getLocations = () => {
-        socket.emit('getLocations', function(response) {
+        socket.timeout(TIMEOUT_MS).emit('getLocations', (err, response) => {
             if (response.status !== 'success') {
                 console.error("Error fetching locations.");
                 alert("Error fetching locations. Please try again.");
@@ -173,7 +184,7 @@ const App = () => {
             getLocations();
             
         } catch (error) {
-            console.log("Unable to get locations. Server might not be online. " + error.message);
+            console.error("Unable to get locations. Server might not be online. " + error.message);
             alert("Unable to get locations. Server might not be online. " + error.message);
         }
     }, []);
@@ -278,9 +289,9 @@ const App = () => {
     // function to toggle themes
     const toggleTheme = () => {
         if (theme === 'light') 
-            { setTheme('dark'); }
+            { setTheme('dark'); localStorage.setItem('theme', 'dark'); }
         else if (theme === 'dark') 
-            { setTheme('light'); }
+            { setTheme('light'); localStorage.setItem('theme', 'light');}
     }
 
     const renderView = () => {
