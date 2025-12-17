@@ -12,11 +12,12 @@ const RoomChatCard = ({roomChat, sendChatMessage}) => {
         }
     };
 
-    //auto scroll to bottom of chat
     useEffect(() => {
+        //auto scroll to bottom of chat when new message arrives
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
+
     }, [roomChat]);
 
     return (
@@ -29,7 +30,7 @@ const RoomChatCard = ({roomChat, sendChatMessage}) => {
                 ))}
             </div>
             <input type="text" className="font-semibold bg-white dark:bg-gray-800 text-black dark:text-white border-2 
-                    border-gray-300 dark:border-gray-500 rounded-l " placeholder='...' maxLength={35}
+                    border-gray-300 dark:border-gray-500 rounded-l " placeholder=' ...' maxLength={70}
                 onKeyDown={handleKeyPress} />
         </Card>
         );

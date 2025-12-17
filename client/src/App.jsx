@@ -325,7 +325,7 @@ const App = () => {
                     </div>);
             case 'room': 
                 return (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 lg:mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 mt-4 lg:mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerName}}>
 
                                 {/* Left Column: action card */}
@@ -340,10 +340,10 @@ const App = () => {
                                 </button>
                                 <div className="text-center">
 
-                                    <p className="text-gray-600 dark:text-gray-400">Room Code</p>
+                                    <p className="text-gray-900 dark:text-gray-400">Room Code</p>
                                     <div className="flex items-center justify-center gap-2">
 
-                                        <h2 id='roomCodeText' className="text-5xl font-extrabold text-cyan-600 dark:text-cyan-400 select-all">{roomCode}</h2>
+                                        <h2 id='roomCodeText' className="text-5xl font-extrabold text-cyan-900 dark:text-cyan-400 select-all">{roomCode}</h2>
                                         <button onClick={() => {
                                             navigator.clipboard.writeText(roomCode);
                                             setIsCodeCopied(true);
@@ -360,7 +360,7 @@ const App = () => {
                                             }
                                         </button>
                                     </div>
-                                    <span className="text-gray-500 dark:text-gray-500 mt-2">Share this code with your friends!</span>
+                                    <span className="text-gray-900 dark:text-gray-400 mt-2">Share this code with your friends!</span>
                                 </div>
                                 
                                 
@@ -378,14 +378,14 @@ const App = () => {
                             </div>
                         </PlayerContext.Provider>
                     </div>);
-                case 'revealrole':
-                    return (
-                        <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
-                            <RevealRoleCard role={role} location={location} />
-                        </div>);
+            case 'revealrole':
+                return (
+                    <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
+                        <RevealRoleCard location={location} role={role} onContinue={()=>{ setView("in-progress") }} />
+                    </div>);
             case 'in-progress':
                 return (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 lg:mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 mt-4 lg:mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerName}}>
                             
                                 {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
@@ -430,7 +430,7 @@ const App = () => {
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("lobby") }}
                     >show lobby view
                 </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("revealrole") }}>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("revealrole"); setRole("Spy"); setLocation("unknown"); }}>
                     show reveal role view
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("loading"); setLoadingMessage("test message..."); }}
