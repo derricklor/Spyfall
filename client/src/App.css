@@ -7,9 +7,30 @@
   font-weight: 400;
 
   color-scheme: light dark;
+  --primary: var(--color-cyan-400);
+  --primary-dark: var(--color-cyan-800);
+
+  --secondary: var(--color-gray-400);
+  --secondary-dark: var(--color-gray-700);
+
+  --success: var(--color-green-400);
+  --success-dark: var(--color-green-800);
+
+  --danger: var(--color-red-400);
+  --danger-dark: var(--color-pink-800);
+
+  --warning: var(--color-amber-400);
+  --warning-dark: var(--color-amber-800);
+
+  --light: var(--color-gray-200);
+  --dark: var(--color-gray-900);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  /* Add any custom CSS for specific class names*/
 }

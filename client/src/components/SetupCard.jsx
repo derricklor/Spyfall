@@ -21,9 +21,9 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
     useEffect(() => {
         const codebox = document.getElementById('codebox');
         if (invalidRoomCode) {
-            codebox.classList.add('border-3', 'border-red-500', 'dark:border-pink-500', 'bg-red-200', 'dark:bg-pink-900/30');
+            codebox.classList.add('border-3', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
         } else {
-            codebox.classList.remove('border-3', 'border-red-500', 'dark:border-pink-500', 'bg-red-200', 'dark:bg-pink-900/30');
+            codebox.classList.remove('border-3', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
         }
     }, [invalidRoomCode]);
 
@@ -103,15 +103,15 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
             <div className="space-y-4 pt-4 pb-8 border-b border-gray-900 dark:border-gray-700">
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-black dark:text-gray-300">Welcome!</h2>
-                    <p className="text-black dark:text-gray-300 mt-2">Enter your name to begin.</p>
+                    <p className="text-[var(--secondary-dark)] dark:text-[var(--secondary)] mt-2">Enter your name to begin.</p>
                 </div>
                 <div className="flex-col justify-center gap-4">
                     <input type="text" placeholder="Your Name" id='name' required
                         value={playerContextObj.playerName} maxLength={20}
                         onChange={(e) => playerContextObj.setPlayerName(e.target.value)}
-                        className="p-3 bg-gray-200 dark:bg-gray-700 border border-gray-600 inset-shadow-sm/10
-                            rounded-lg text-black dark:text-white w-full focus:outline focus:outline-cyan-400 
-                            invalid:focus:outline-red-500 dark:focus:outline-cyan-400 dark:invalid:focus:outline-pink-500"
+                        className="p-3 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] dark:border-[var(--secondary)]
+                            inset-shadow-sm/10 rounded-lg text-black dark:text-white w-full focus:outline focus:outline-[var(--primary)]
+                            invalid:focus:outline-[var(--danger)] dark:focus:outline-[var(--primary-dark)] dark:invalid:focus:outline-[var(--danger-dark)]"
                     />
                     
                 </div>

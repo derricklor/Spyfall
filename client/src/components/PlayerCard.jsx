@@ -17,11 +17,11 @@ const PlayerCard = ({ location, role }) => {
                     onClick={() => setIsRoleRevealed(!isRoleRevealed)}
                 >
                     <div className={`transition-all duration-300 ${isRoleRevealed ? 'opacity-0' : 'opacity-100'}`}>
-                        <div className="absolute inset-0 w-30 flex items-center justify-center bg-gray-400 dark:bg-gray-700 rounded-lg">
+                        <div className="absolute inset-0 w-32 h-8 flex items-center justify-center bg-gray-400 dark:bg-gray-700 rounded-lg">
                         </div>
                     </div>
 
-                    <div className={`transition-all duration-300 ${isRoleRevealed ? 'opacity-100' : 'opacity-0'}`}>
+                    <div className={`transition-all duration-300 ${isRoleRevealed ? 'opacity-100' : 'opacity-0 hidden'}`}>
                         <div className="flex items-center justify-center">
                             <span className={`text-xl font-bold ml-2 ${isSpy ? 'text-red-500' : 'text-blue-500 dark:text-blue-400'}`}>
                                 {role}
@@ -36,11 +36,11 @@ const PlayerCard = ({ location, role }) => {
                     onClick={() => setIsLocationRevealed(!isLocationRevealed)}
                 >
                     <div className={`transition-all duration-300 ${isLocationRevealed ? 'opacity-0' : 'opacity-100'}`}>
-                        <div className="absolute inset-0 w-30 flex items-center justify-center bg-gray-400 dark:bg-gray-700 rounded-lg">
+                        <div className="absolute inset-0 w-32 h-8 flex items-center justify-center bg-gray-400 dark:bg-gray-700 rounded-lg">
                         </div>
                     </div>
 
-                    <div className={`transition-all duration-300 ${isLocationRevealed ? 'opacity-100' : 'opacity-0'}`}>
+                    <div className={`transition-all duration-300 ${isLocationRevealed ? 'opacity-100' : 'opacity-0 hidden'}`}>
 
                         <div className="flex items-center justify-center">
                             <span className="text-xl font-bold ml-2 text-black dark:text-white">

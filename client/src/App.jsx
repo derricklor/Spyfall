@@ -331,7 +331,7 @@ const App = () => {
                                 {/* Left Column: action card */}
                             <div className="col-span-1 space-y-6">
                                 <button onClick={() => {leaveRoom(roomCode, playerCode); }} // wait for leftRoom handler to get response
-                                    className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                                    className="flex items-center gap-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] hover:bg-[var(--secondary)] dark:hover:bg-[var(--secondary-dark)] text-black dark:text-white 
                                     py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
@@ -340,16 +340,16 @@ const App = () => {
                                 </button>
                                 <div className="text-center">
 
-                                    <p className="text-gray-900 dark:text-gray-400">Room Code</p>
+                                    <p className="text-[var(--dark)] dark:text-[var(--secondary)]">Room Code</p>
                                     <div className="flex items-center justify-center gap-2">
 
-                                        <h2 id='roomCodeText' className="text-5xl font-extrabold text-cyan-900 dark:text-cyan-400 select-all">{roomCode}</h2>
+                                        <h2 id='roomCodeText' className="text-5xl font-extrabold  text-[var(--primary-light)] dark:text-[var(--primary-dark)] select-all">{roomCode}</h2>
                                         <button onClick={() => {
                                             navigator.clipboard.writeText(roomCode);
                                             setIsCodeCopied(true);
                                             setTimeout(() => setIsCodeCopied(false), 3000);
                                         }}
-                                        className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                                        className="bg-[var(--light)] dark:bg-[var(--secondary-dark)] hover:bg-[var(--secondary)] dark:hover:bg-[var(--secondary-dark)] text-black dark:text-white 
                                         py-2 px-2 rounded-lg font-medium transition duration-200 shadow-md">
                                             {isCodeCopied ?
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -360,7 +360,7 @@ const App = () => {
                                             }
                                         </button>
                                     </div>
-                                    <span className="text-gray-900 dark:text-gray-400 mt-2">Share this code with your friends!</span>
+                                    <span className="text-[var(--dark)] dark:text-[var(--secondary)] mt-2">Share this code with your friends!</span>
                                 </div>
                                 
                                 
@@ -392,7 +392,7 @@ const App = () => {
                             <div className="col-span-1 space-y-6">
                                 <button onClick={() => { leaveRoom(roomCode, playerCode);
                                     }} // wait for leftRoom handler to get response
-                                    className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white 
+                                    className="bg-[var(--light)] dark:bg-[var(--secondary-dark)] hover:bg-[var(--secondary)] dark:hover:bg-[var(--secondary-dark)] text-black dark:text-white 
                                     py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
                                     Leave Room
                                 </button>
@@ -424,13 +424,13 @@ const App = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-300 dark:bg-gray-900 text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4 transition duration-500">
-            <div className='fixed top-0 flex w-full bg-cyan-500 dark:bg-cyan-900 shadow-xl p-4 items-center justify-between'>
+        <div className="min-h-screen bg-[var(--light)] dark:bg-[var(--dark)] text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4 transition duration-500">
+            <div className='fixed top-0 flex w-full bg-[var(--primary)] dark:bg-[var(--primary-dark)] shadow-xl p-4 items-center justify-between'>
                 <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("lobby") }}
                     >show lobby view
                 </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("revealrole"); setRole("Spy"); setLocation("unknown"); }}>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("revealrole"); setRole("Ice cream vendor"); setLocation("Space station over antarctica"); }}>
                     show reveal role view
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("loading"); setLoadingMessage("test message..."); }}
