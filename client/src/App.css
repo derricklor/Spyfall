@@ -8,7 +8,7 @@
 
   color-scheme: light dark;
   --primary: var(--color-cyan-400);
-  --primary-dark: var(--color-cyan-800);
+  --primary-dark: var(--color-cyan-700);
 
   --secondary: var(--color-gray-400);
   --secondary-dark: var(--color-gray-700);

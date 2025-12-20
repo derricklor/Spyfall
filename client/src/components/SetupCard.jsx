@@ -10,7 +10,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
 
     const codeStyle = `h-16 w-16 p-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] dark:border-[var(--secondary)] inset-shadow-sm/10 rounded-lg text-3xl text-[var(--dark)] dark:text-[var(--light)] text-center focus:outline-2 focus:outline-[var(--primary)]`
     const btn_off = `bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] dark:border-[var(--secondary)] cursor-not-allowed hover:scale-95`
-    const btn_on = `bg-[var(--primary)] hover:bg-[var(--primary)]/60 hover:cursor-pointer hover:scale-105`
+    const btn_on = `bg-[var(--primary)] hover:bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105`
     //if roomCode exists in context, populate the input boxes
     useEffect(() => {
         if (playerContextObj.roomCode && playerContextObj.roomCode.length === 4) {
