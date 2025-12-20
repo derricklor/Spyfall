@@ -6,8 +6,11 @@ import PlayerContext from '../contexts/PlayerContext';
 const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCode }) => {
     
     // has properties from closest parent context: playerName, setPlayerName, roomCode, setRoomCode
-    const playerContextObj = useContext(PlayerContext); 
+    const playerContextObj = useContext(PlayerContext);
 
+    const codeStyle = `h-16 w-16 p-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] dark:border-[var(--secondary)] inset-shadow-sm/10 rounded-lg text-3xl text-[var(--dark)] dark:text-[var(--light)] text-center focus:outline-2 focus:outline-[var(--primary)]`
+    const btn_off = `bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] dark:border-[var(--secondary)] cursor-not-allowed hover:scale-95`
+    const btn_on = `bg-[var(--primary)] hover:bg-[var(--primary)]/60 hover:cursor-pointer hover:scale-105`
     //if roomCode exists in context, populate the input boxes
     useEffect(() => {
         if (playerContextObj.roomCode && playerContextObj.roomCode.length === 4) {
@@ -21,9 +24,9 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
     useEffect(() => {
         const codebox = document.getElementById('codebox');
         if (invalidRoomCode) {
-            codebox.classList.add('border-3', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
+            codebox.classList.add('border-2', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
         } else {
-            codebox.classList.remove('border-3', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
+            codebox.classList.remove('border-2', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
         }
     }, [invalidRoomCode]);
 
@@ -100,9 +103,9 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
 
     return (
         <Card title="" className="p-6 mt-6 h-full flex flex-col space-y-4 transition duration-500">
-            <div className="space-y-4 pt-4 pb-8 border-b border-gray-900 dark:border-gray-700">
+            <div className="space-y-4 pt-4 pb-8 border-b border-[var(--dark)] dark:border-[var(--dark)]">
                 <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-black dark:text-gray-300">Welcome!</h2>
+                    <h2 className="text-3xl font-bold text-[var(--dark)] dark:text-[var(--light)]">Welcome!</h2>
                     <p className="text-[var(--secondary-dark)] dark:text-[var(--secondary)] mt-2">Enter your name to begin.</p>
                 </div>
                 <div className="flex-col justify-center gap-4">
@@ -110,60 +113,46 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
                         value={playerContextObj.playerName} maxLength={20}
                         onChange={(e) => playerContextObj.setPlayerName(e.target.value)}
                         className="p-3 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] dark:border-[var(--secondary)]
-                            inset-shadow-sm/10 rounded-lg text-black dark:text-white w-full focus:outline focus:outline-[var(--primary)]
-                            invalid:focus:outline-[var(--danger)] dark:focus:outline-[var(--primary-dark)] dark:invalid:focus:outline-[var(--danger-dark)]"
+                            inset-shadow-sm/10 rounded-lg text-[var(--dark)] dark:text-[var(--light)] w-full focus:outline-2 focus:outline-[var(--primary)]
+                            invalid:focus:outline-[var(--danger)]"
                     />
                     
                 </div>
             </div>
 
-                
             <div className="space-y-4 pt-4">
                 <div className="text-center mb-4">
-                    <p className="text-black dark:text-gray-300 mt-2">Join with Code</p>
+                    <p className="text-[var(--dark)] dark:text-[var(--light)] mt-2">Join with Code</p>
                 </div>
                 <div id='codebox' className="flex justify-center gap-2 rounded-xl p-2">
-
                     <input type="text" maxLength="1" pattern="^[a-zA-Z0-9]?$" id='code1' nextinput='code2' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
-                        className="h-16 w-16 p-2 bg-gray-200 dark:bg-gray-700 border border-gray-700 inset-shadow-sm/10 
-                            rounded-lg text-3xl text-gray-700 dark:text-white text-center focus:outline focus:outline-cyan-400"/>
-
+                        className={codeStyle}/>
                     <input type="text" maxLength="1" pattern="^[a-zA-Z0-9]?$" id='code2' nextinput='code3' previnput='code1' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
-                        className="h-16 w-16 p-2 bg-gray-200 dark:bg-gray-700 border border-gray-700 inset-shadow-sm/10 
-                            rounded-lg text-3xl text-gray-700 dark:text-white text-center focus:outline focus:outline-cyan-400"/>
-
+                        className={codeStyle}/>
                     <input type="text" maxLength="1" pattern="^[a-zA-Z0-9]?$" id='code3' nextinput='code4' previnput='code2' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
-                        className="h-16 w-16 p-2 bg-gray-200 dark:bg-gray-700 border border-gray-700 inset-shadow-sm/10 
-                            rounded-lg text-3xl text-gray-700 dark:text-white text-center focus:outline focus:outline-cyan-400"/>
-
+                        className={codeStyle}/>
                     <input type="text" maxLength="1" pattern="^[a-zA-Z0-9]?$" id='code4' previnput='code3' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
-                        className="h-16 w-16 p-2 bg-gray-200 dark:bg-gray-700 border border-gray-700 inset-shadow-sm/10  
-                            rounded-lg text-3xl text-gray-700 dark:text-white text-center focus:outline focus:outline-cyan-400"/>
-
+                        className={codeStyle}/>
                 </div>
-                    <div className="text-center">
-                        {invalidRoomCode && <p className="text-lg font-semibold text-red-500 dark:text-pink-500">Room not found</p>}
-                    </div>
+                <div className="text-center">
+                    {invalidRoomCode && <p className="text-lg font-semibold text-[var(--danger)] dark:text-[var(--danger-dark)]">Room not found</p>}
+                </div>
             </div>
 
             <div className="flex gap-2">
                 <button onClick={() => onCreateRoom(playerContextObj.playerName)} // anonymous function to pass name value
                     className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-200 shadow-md 
-                        ${!playerContextObj.playerName 
-                            ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed hover:scale-95' 
-                            : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer hover:scale-105'}`}
-                    disabled={!playerContextObj.playerName}>
+                        ${!playerContextObj.playerName ? btn_off : btn_on}`}
+                        disabled={!playerContextObj.playerName}>
                     Create Room
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                 </button>
                 <button onClick={() => { onJoinRoom(playerContextObj.roomCode, playerContextObj.playerName); }} // anonymous function to pass name and code values
-                    className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl font-medium transition duration-200 shadow-md 
-                        ${(playerContextObj.roomCode.length !== 4) || (!playerContextObj.playerName) 
-                            ? 'bg-gray-100 dark:bg-gray-800 border border-gray-400 dark:border-gray-600 cursor-not-allowed hover:scale-95' 
-                            : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer hover:scale-105'}`}
-                    disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName} >
+                    className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-200 shadow-md 
+                        ${(playerContextObj.roomCode.length !== 4) || (!playerContextObj.playerName) ? btn_off : btn_on}`}
+                        disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName}>
                     Join Room
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
