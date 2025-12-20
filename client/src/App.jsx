@@ -325,13 +325,13 @@ const App = () => {
                     </div>);
             case 'room': 
                 return (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 mt-4 lg:mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerName}}>
 
                                 {/* Left Column: action card */}
-                            <div className="col-span-1 space-y-6">
+                            <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6">
                                 <button onClick={() => {leaveRoom(roomCode, playerCode); }} // wait for leftRoom handler to get response
-                                    className="flex items-center gap-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] hover:bg-[var(--secondary)] dark:hover:bg-[var(--secondary-dark)] text-black dark:text-white 
+                                    className="flex items-center gap-2 bg-[var(--warning)] dark:bg-[var(--warning-dark)] hover:bg-[var(--warning-dark)] dark:hover:bg-yellow-600 text-black 
                                     py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
@@ -343,7 +343,9 @@ const App = () => {
                                     <p className="text-[var(--dark)] dark:text-[var(--secondary)]">Room Code</p>
                                     <div className="flex items-center justify-center gap-2">
 
-                                        <h2 id='roomCodeText' className="text-5xl font-extrabold  text-[var(--primary-light)] dark:text-[var(--primary-dark)] select-all">{roomCode}</h2>
+                                        <h2 id='roomCodeText' className="text-5xl font-extrabold text-[var(--primary-dark)] dark:text-[var(--primary)] select-all">
+                                            {roomCode}
+                                        </h2>
                                         <button onClick={() => {
                                             navigator.clipboard.writeText(roomCode);
                                             setIsCodeCopied(true);
@@ -368,12 +370,12 @@ const App = () => {
                             </div>
 
                                 {/* Middle Column: RoomChatHistory (middle) */}
-                            <div className="col-span-1 lg:col-span-3 space-y-6">
+                            <div className="col-span-1 lg:col-start-2 lg:col-span-2 xl:col-start-3 xl:col-span-2 space-y-6">
                                 <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
                             </div>
 
                                 {/* Second row */}
-                            <div className="col-span-1 lg:col-span-2 lg:col-start-2 space-y-6">
+                            <div className="col-span-1 lg:row-start-2 lg:col-start-1 lg:col-span-3 xl:col-start-3 xl:col-span-2 space-y-6">
                                 <LocationsCard locationsArr={locationsArr} serverURL={URL}/>
                             </div>
                         </PlayerContext.Provider>
@@ -385,14 +387,14 @@ const App = () => {
                     </div>);
             case 'in-progress':
                 return (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-8 mt-4 lg:mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerName}}>
                             
                                 {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
-                            <div className="col-span-1 space-y-6">
+                            <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6">
                                 <button onClick={() => { leaveRoom(roomCode, playerCode);
                                     }} // wait for leftRoom handler to get response
-                                    className="bg-[var(--light)] dark:bg-[var(--secondary-dark)] hover:bg-[var(--secondary)] dark:hover:bg-[var(--secondary-dark)] text-black dark:text-white 
+                                    className="flex items-center gap-2 bg-[var(--warning)] dark:bg-[var(--warning-dark)] hover:bg-[var(--warning-dark)] dark:hover:bg-yellow-600 text-black 
                                     py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
                                     Leave Room
                                 </button>
@@ -401,12 +403,12 @@ const App = () => {
                             </div>
 
                                 {/* Middle Column: RoomChatHistory (middle) */}
-                            <div className="col-span-1 lg:col-span-3 space-y-6">
+                            <div className="col-span-1 lg:col-start-2 lg:col-span-2 xl:col-start-3 xl:col-span-2 space-y-6">
                                 <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
                             </div>
 
                                 {/* Second row */}
-                            <div className="col-span-1 lg:col-span-2 lg:col-start-2 space-y-6">
+                            <div className="col-span-1 lg:row-start-2 lg:col-start-1 lg:col-span-3 xl:col-start-3 xl:col-span-2 space-y-6">
                                 <LocationsCard locationsArr={locationsArr} serverURL={URL}/>
                             </div>
                         </PlayerContext.Provider>

@@ -19,8 +19,8 @@
   --danger: var(--color-red-400);
   --danger-dark: var(--color-pink-800);
 
-  --warning: var(--color-amber-400);
-  --warning-dark: var(--color-amber-800);
+  --warning: var(--color-yellow-400);
+  --warning-dark: var(--color-yellow-500);
 
   --light: var(--color-gray-200);
   --dark: var(--color-gray-900);

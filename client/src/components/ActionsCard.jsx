@@ -16,8 +16,8 @@ const ActionsCard = ({ playerList, onStartGame }) => {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
 
                     {playerList.map((player, index) => (
-                        <div key={index} className=" text-gray-700 dark:text-gray-300">
-                            <span className={`flex items-center gap-2 font-semibold truncate ${playerContextObj.playerName === player.name ? 'text-cyan-500 dark:text-cyan-400' : 'text-gray-900 dark:text-white'}`}>
+                        <div key={index} className=" text-[var(--secondary-dark)] dark:text-[var(--light)]">
+                            <span className={`flex items-center gap-2 font-semibold truncate ${playerContextObj.playerName === player.name ? 'text-[var(--primary)]' : 'text-[var(--dark)]dark:text-[var(--light)]'}`}>
                                 {player.isHost && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
                                     <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
                                 </svg>}
@@ -28,17 +28,17 @@ const ActionsCard = ({ playerList, onStartGame }) => {
                 </div>
                 {isHost && (
                     <div className="flex flex-col items-center space-y-4">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">You are the host. You can start the game when there are at least 3 players.</span>
-                    <button className={`text-black dark:text-white bg-gray-300 dark:bg-gray-500 rounded-lg p-2 transition duration-200 shadow-md
+                    <span className="text-sm text-[var(--secondary-dark)] dark:text-[var(--secondary)]">You are the host. You can start the game when there are at least 3 players.</span>
+                    <button className={`text-[var(--dark)] dark:text-[var(--light)] bg-[var(--light)] dark:bg-[var(--secondary-dark)] rounded-lg p-2 transition duration-200 shadow-md
                         ${playerList.length < 3 
-                        ? 'bg-gray-100 dark:bg-gray-600 border border-gray-400 dark:border-gray-600 cursor-not-allowed hover:scale-95' 
-                        : 'bg-blue-500 hover:bg-blue-600 hover:cursor-pointer hover:scale-105'}`} onClick={onStartGame} disabled={playerList.length < 3}>
+                        ? 'bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] cursor-not-allowed hover:scale-95' 
+                        : 'bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105'}`} onClick={onStartGame} disabled={playerList.length < 3}>
                         Start Game
                     </button>
                     </div>
                 )}
                 {!isHost && (
-                    <p className="text-center text-gray-600 dark:text-gray-400">Waiting for the host to start the game...</p>
+                    <p className="text-center text-[var(--secondary-dark)] dark:text-[var(--secondary)]">Waiting for the host to start the game...</p>
                 )}
 
             </Card>

@@ -8,9 +8,9 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
     // has properties from closest parent context: playerName, setPlayerName, roomCode, setRoomCode
     const playerContextObj = useContext(PlayerContext);
 
-    const codeStyle = `h-16 w-16 p-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] dark:border-[var(--secondary)] inset-shadow-sm/10 rounded-lg text-3xl text-[var(--dark)] dark:text-[var(--light)] text-center focus:outline-2 focus:outline-[var(--primary)]`
-    const btn_off = `bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] dark:border-[var(--secondary)] cursor-not-allowed hover:scale-95`
-    const btn_on = `bg-[var(--primary)] hover:bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105`
+    const codeStyle = `h-16 w-16 p-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] inset-shadow-sm/10 rounded-lg text-3xl text-[var(--dark)] dark:text-[var(--light)] text-center focus:outline-2 focus:outline-[var(--primary)]`
+    const btn_off = `bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] cursor-not-allowed hover:scale-95`
+    const btn_on = `bg-[var(--primary)] dark:bg-cyan-500 text-[var(--dark)] dark:text-[var(--light)] hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:cursor-pointer hover:scale-105`
     //if roomCode exists in context, populate the input boxes
     useEffect(() => {
         if (playerContextObj.roomCode && playerContextObj.roomCode.length === 4) {
@@ -112,7 +112,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
                     <input type="text" placeholder="Your Name" id='name' required
                         value={playerContextObj.playerName} maxLength={20}
                         onChange={(e) => playerContextObj.setPlayerName(e.target.value)}
-                        className="p-3 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] dark:border-[var(--secondary)]
+                        className="p-3 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)]
                             inset-shadow-sm/10 rounded-lg text-[var(--dark)] dark:text-[var(--light)] w-full focus:outline-2 focus:outline-[var(--primary)]
                             invalid:focus:outline-[var(--danger)]"
                     />
