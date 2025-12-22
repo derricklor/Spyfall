@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import Card from './Card';
+import Button from './Button'
 import PlayerContext from '../contexts/PlayerContext';
 
 // Lobby view for joining or creating a game
@@ -9,8 +10,8 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
     const playerContextObj = useContext(PlayerContext);
 
     const codeStyle = `h-16 w-16 p-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] inset-shadow-sm/10 rounded-lg text-3xl text-[var(--dark)] dark:text-[var(--light)] text-center focus:outline-2 focus:outline-[var(--primary)]`
-    const btn_off = `bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] cursor-not-allowed hover:scale-95`
-    const btn_on = `bg-[var(--primary)] dark:bg-cyan-500 text-[var(--dark)] dark:text-[var(--light)] hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:cursor-pointer hover:scale-105`
+    const btnStyle = `bg-[var(--primary)] dark:bg-cyan-500 text-[var(--dark)] dark:text-[var(--light)] hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:cursor-pointer hover:scale-105
+                disabled:bg-[var(--light)] disabled:dark:bg-[var(--secondary-dark)] disabled:border disabled:border-[var(--secondary)] disabled:cursor-not-allowed disabled:hover:scale-95`
     //if roomCode exists in context, populate the input boxes
     useEffect(() => {
         if (playerContextObj.roomCode && playerContextObj.roomCode.length === 4) {
@@ -142,7 +143,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
             <div className="flex gap-2">
                 <button onClick={() => onCreateRoom(playerContextObj.playerName)} // anonymous function to pass name value
                     className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-200 shadow-md 
-                        ${!playerContextObj.playerName ? btn_off : btn_on}`}
+                        ${btnStyle}`}
                         disabled={!playerContextObj.playerName}>
                     Create Room
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -151,7 +152,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
                 </button>
                 <button onClick={() => { onJoinRoom(playerContextObj.roomCode, playerContextObj.playerName); }} // anonymous function to pass name and code values
                     className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-200 shadow-md 
-                        ${(playerContextObj.roomCode.length !== 4) || (!playerContextObj.playerName) ? btn_off : btn_on}`}
+                        ${btnStyle}`}
                         disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName}>
                     Join Room
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">

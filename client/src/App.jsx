@@ -416,7 +416,9 @@ const App = () => {
             case 'vote':
                 return (
                 <div className="grid grid-cols-1 gap-6 w-full h-full p-4">
-                    <VoteCard playerList={playerList} onVote={vote}/>                    
+                    <PlayerContext.Provider value={{roomCode, playerCode, playerName}}>
+                        <VoteCard playerList={playerList} onVote={vote}/>                    
+                    </PlayerContext.Provider>
                 </div>);
             default:
                 return (<div>
