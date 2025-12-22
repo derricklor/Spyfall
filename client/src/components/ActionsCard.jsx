@@ -4,7 +4,8 @@ import { useContext } from 'react';
 import PlayerContext from '../contexts/PlayerContext';
 
 // In-game control panel (players and actions)
-const ActionsCard = ({ playerList, onStartGame }) => {
+const ActionsCard = ({ playerList, view, onStartGame, OnCallVote }) => {
+    //change available actions based on view state
 
     const playerContextObj = useContext(PlayerContext);
     //check if current player is host
@@ -26,20 +27,28 @@ const ActionsCard = ({ playerList, onStartGame }) => {
                         </div>
                     ))}
                 </div>
-                {isHost && (
+                {isHost && (view === 'waiting') ? ( // render if host and viewing waiting room
                     <div className="flex flex-col items-center space-y-4">
-                    <span className="text-sm text-[var(--secondary-dark)] dark:text-[var(--secondary)]">You are the host. You can start the game when there are at least 3 players.</span>
-                    <button className={`text-[var(--dark)] dark:text-[var(--light)] bg-[var(--light)] dark:bg-[var(--secondary-dark)] rounded-lg p-2 transition duration-200 shadow-md
-                        ${playerList.length < 3 
-                        ? 'bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] cursor-not-allowed hover:scale-95' 
-                        : 'bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105'}`} onClick={onStartGame} disabled={playerList.length < 3}>
-                        Start Game
-                    </button>
+                        <span className="text-sm text-[var(--secondary-dark)] dark:text-[var(--secondary)]">You are the host. You can start the game when there are at least 3 players.</span>
+                        <button className={`text-[var(--dark)] dark:text-[var(--light)] bg-[var(--light)] dark:bg-[var(--secondary-dark)] rounded-lg p-2 transition duration-200 shadow-md
+                            ${playerList.length < 3 
+                            ? 'bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] cursor-not-allowed hover:scale-95' 
+                            : 'bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105'}`} onClick={onStartGame} disabled={playerList.length < 3}>
+                            Start Game
+                        </button>
                     </div>
-                )}
-                {!isHost && (
+                ) : ''}
+                {!isHost && (view === 'waiting') ? (
                     <p className="text-center text-[var(--secondary-dark)] dark:text-[var(--secondary)]">Waiting for the host to start the game...</p>
-                )}
+                ) : ''}
+                {isHost && (view ==='in-progress') ? ( // render end game button
+                    <div>
+                        <button className="flex justify-center items-center rounded-3xl shadow-md text-[var(--dark)] dark:text-[var(--light)] ">
+                            onClick={endGame}
+                            End Game
+                        </button>
+                    </div>
+                ) : '' }
 
             </Card>
 

@@ -4,9 +4,9 @@ import Button from './Button'
 import PlayerContext from '../contexts/PlayerContext';
 
 // Lobby view for joining or creating a game
-const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCode }) => {
+const SetupCard = ({ onCreateRoom, onJoinRoom, errorMessage }) => {
     
-    // has properties from closest parent context: playerName, setPlayerName, roomCode, setRoomCode
+    // has properties from closest parent context: playerName, setPlayerName, roomCode, setRoomCode, errorMessage
     const playerContextObj = useContext(PlayerContext);
 
     const codeStyle = `h-16 w-16 p-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] inset-shadow-sm/10 rounded-lg text-3xl text-[var(--dark)] dark:text-[var(--light)] text-center focus:outline-2 focus:outline-[var(--primary)]`
@@ -24,12 +24,12 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
     //mark code input boxes invalid if invalidRoomCode prop is true
     useEffect(() => {
         const codebox = document.getElementById('codebox');
-        if (invalidRoomCode) {
+        if (errorMessage) {
             codebox.classList.add('border-2', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
         } else {
             codebox.classList.remove('border-2', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
         }
-    }, [invalidRoomCode]);
+    }, [errorMessage]);
 
     const onPasteCode = (e) => {
         //check if pasted data exists
@@ -45,7 +45,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
         let code = '';
         // all or nothing paste logic, any unfilled inputs are considered empty
         // clear all input boxes first
-        setInvalidRoomCode(false); //clear invalid room code state on new paste
+        
         for (let i = 0; i < 4; i++) {
             let inputBox = document.getElementById(`code${i+1}`);
             if (inputBox) {
@@ -91,7 +91,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
         } else if (value && nextInput) {
             document.getElementById(nextInput).focus();
         }
-        setInvalidRoomCode(false); //clear invalid room code state on new input
+       
         // Update room code in context
         let code = '';
         for (let i = 1; i <= 4; i++) {
@@ -136,7 +136,8 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, invalidRoomCode, setInvalidRoomCo
                         className={codeStyle}/>
                 </div>
                 <div className="text-center">
-                    {invalidRoomCode && <p className="text-lg font-semibold text-[var(--danger)] dark:text-[var(--danger-dark)]">Room not found</p>}
+                    
+                    {errorMessage != null ? <p className="text-lg font-semibold text-[var(--danger)] dark:text-[var(--danger-dark)]">{errorMessage}</p> : ''}
                 </div>
             </div>
 

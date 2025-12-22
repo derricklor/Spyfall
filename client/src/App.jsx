@@ -20,7 +20,7 @@ const TIMEOUT_MS = 5000;
 
 // --- Main App Component ---
 const App = () => {
-    const [view, setView] = useState('lobby'); // 'lobby' || 'room' || 'revealrole' ||'in-progress' ||'vote' || 'loading'
+    const [view, setView] = useState('lobby'); // 'lobby' || 'waiting' || 'revealrole' ||'in-progress' ||'vote' || 'loading'
     const [theme, setTheme] = useState('dark');
     const [loadingMessage, setLoadingMessage] = useState('');
 
@@ -37,7 +37,7 @@ const App = () => {
     const [playerCode, setPlayerCode] = useState('');
     const [roomCode, setRoomCode] = useState('');
 
-    const [invalidRoomCode, setInvalidRoomCode] = useState(false); // change to general setup error e.g. unable to create room || invalid room code
+    const [errorMessage, setErrorMessage] = useState(null); // change to general setup error e.g. 'unable to create room' || 'invalid room code'
     const [role, setRole] = useState(''); // player's role
     const [location, setLocation] = useState(''); // player's location
     const playerNameRef = useRef(playerName);
@@ -72,6 +72,7 @@ const App = () => {
                 setRoomCode(response.roomCode);
                 setRoomChat(prev => [...prev, "Created room " + response.roomCode]);
                 joinRoom(response.roomCode, playerNameRef.current);
+                setErrorMessage(null);
             }
         });
     };
@@ -86,16 +87,16 @@ const App = () => {
                 setView('lobby');
             } else if (response.status !== 'success') {
                 console.error("Error joining room. " + response.message);
-                setInvalidRoomCode(true);
+                setErrorMessage(response.message);
                 setView('lobby');
             } else { // else success
-                setView('room');
+                setView('waiting');
                 setPlayerName(response.playerName); //returned name could be different
                 setRoomChat(prev => [...prev, "Joined room " + roomCode]);
                 setRoomCode(response.roomCode);
                 setPlayerCode(response.playerCode);
                 setPlayerList(response.playerList);
-                setInvalidRoomCode(false);
+                setErrorMessage(null);
             }
         });
     };
@@ -112,6 +113,7 @@ const App = () => {
                 setView('lobby');
                 setRoomChat(["Welcome to the room!"]);
                 console.log(response.message);
+                setErrorMessage(null);
             }
         });
     }
@@ -251,7 +253,7 @@ const App = () => {
                     // setVoteCountdownTargetDate(new Date(data.endDate));
                     break;
                 case 'resetRoom':
-                    setView('room');
+                    setView('waiting');
                     setRoomChat(prev => [...prev, data.message]);
                     setRole('');
                     setLocation('');
@@ -314,8 +316,8 @@ const App = () => {
             case 'lobby':
                 return (
                     <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
-                        <PlayerContext.Provider value={{ playerName, setPlayerName, roomCode, setRoomCode }}>
-                            <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} invalidRoomCode={invalidRoomCode} setInvalidRoomCode={setInvalidRoomCode} />
+                        <PlayerContext.Provider value={{ playerName, setPlayerName, roomCode, setRoomCode, errorMessage }}>
+                            <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} errorMessage={errorMessage} />
                         </PlayerContext.Provider>
                     </div>);
             case 'loading':
@@ -323,7 +325,7 @@ const App = () => {
                     <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
                         <LoadingCard message={loadingMessage} />
                     </div>);
-            case 'room': 
+            case 'waiting': 
                 return (
                     <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerName}}>
@@ -339,7 +341,6 @@ const App = () => {
                                     Leave Room
                                 </button>
                                 <div className="text-center">
-
                                     <p className="text-[var(--dark)] dark:text-[var(--secondary)]">Room Code</p>
                                     <div className="flex items-center justify-center gap-2">
 
@@ -365,8 +366,7 @@ const App = () => {
                                     <span className="text-[var(--dark)] dark:text-[var(--secondary)] mt-2">Share this code with your friends!</span>
                                 </div>
                                 
-                                
-                                <ActionsCard playerList={playerList} onStartGame={startGame}/>
+                                <ActionsCard playerList={playerList} view={view} onStartGame={startGame}/>
                             </div>
 
                                 {/* Middle Column: RoomChatHistory (middle) */}
@@ -399,7 +399,7 @@ const App = () => {
                                     Leave Room
                                 </button>
                                 <PlayerCard location={location} role={role}/>
-                                <ActionsCard playerList={playerList} onStartGame={startGame}/>
+                                <ActionsCard playerList={playerList} view={view} OnCallVote={callVote}/>
                             </div>
 
                                 {/* Middle Column: RoomChatHistory (middle) */}
@@ -415,11 +415,11 @@ const App = () => {
                     </div>);
             case 'vote':
                 return (
-                <div className="grid grid-cols-1 gap-6 w-full h-full p-4">
-                    <PlayerContext.Provider value={{roomCode, playerCode, playerName}}>
-                        <VoteCard playerList={playerList} onVote={vote}/>                    
-                    </PlayerContext.Provider>
-                </div>);
+                    <div className="grid grid-cols-1 gap-6 w-full h-full p-4">
+                        <PlayerContext.Provider value={{roomCode, playerCode, playerName}}>
+                            <VoteCard playerList={playerList} onVote={vote}/>                    
+                        </PlayerContext.Provider>
+                    </div>);
             default:
                 return (<div>
                     <h1>Unknown View</h1>                    
