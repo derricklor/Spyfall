@@ -193,6 +193,56 @@ async function finalVote(roomCode) {
     await room.save();
 }
 
+async function handleLeaveRoom(room, player, socketID) {
+    let assignNewHost = false;
+    let isSpy = false;
+    // 00, 01, 10, 11
+
+    //assign new host if host left and players remain
+    if (player.isHost && room.players.length > 1) {
+        assignNewHost = true;
+    }
+    //player leaving is spy, reset room
+    if (player.role === 'Spy') {
+        isSpy = true;
+    }
+
+    //remove player from room by filtering out their socketID, allows for multiple connections per browser
+    room.players = room.players.filter(p => p.socketID !== socketID);
+    if (assignNewHost) {
+        room.players[0].isHost = true; // assign first player as new host
+    }
+    await room.save();
+    //broadcast to other players in room
+    if (assignNewHost && isSpy) {// 11
+        io.to(room.roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room. ${room.players[0].name} is the new host.`, playerLeftID: player.playerCode, newHostID: room.players[0].playerCode })
+        io.to(room.roomCode).emit('message', { type: 'resetRoom', message: `Game has ended. ${player.name} was the Spy.` })
+        await resetRoom(room);
+    } else if (assignNewHost && !isSpy) {// 10
+        io.to(room.roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room. ${room.players[0].name} is the new host.`, playerLeftID: player.playerCode, newHostID: room.players[0].playerCode })
+    } else if (!assignNewHost && isSpy) { // 01
+        io.to(room.roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room.`, playerLeftID: player.playerCode });
+        io.to(room.roomCode).emit('message', { type: 'resetRoom', message: `Game has ended. ${player.name} was the Spy.` })
+        await resetRoom(room);
+    } else { //00
+        io.to(room.roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room.`, playerLeftID: player.playerCode });
+    }
+}
+
+async function resetRoom(room) {
+    //clear any existing timeouts
+    clearTimeout(room.gameTimeoutID);
+    clearTimeout(room.voteTimeoutID);
+    //reset room states
+    room.gameState = 'waiting';
+    room.voteOffCooldown = null;
+    room.voteTimeoutID = null;
+    room.location = null;
+    room.gameTimeoutID = null;
+    room.gameEndDate = null;
+    await room.save();
+}
+
 io.on('connection', (socket) => {
     serverLog(`A user connected: ${socket.id}`);
     
@@ -378,11 +428,11 @@ io.on('connection', (socket) => {
                 playerName = `${baseName} (${suffix})`;
             }
             // generate player code
-            let playerCode = generateCode(5);
+            let playerCode = generateCode(4);
             // make sure playerCode is unique in room
             const existingCodes = new Set(room.players.map(p => p.playerCode));
             while (existingCodes.has(playerCode)) {
-                playerCode = generateCode(5);
+                playerCode = generateCode(4);
             }
             
             // Add player to the room, if players is empty make them host
@@ -395,11 +445,11 @@ io.on('connection', (socket) => {
             await room.save();
             
             const updatedRoom = await Room.findOne({ roomCode });// get latest room data
-            // map returns new array populated by values returned from function, which is object with name and isHost
-            const playerList = updatedRoom.players.map(p => ({ name: p.name, isHost: p.isHost }));
+            // map returns new array populated by values returned from function, which is object with name, playerCode, isHost
+            const playerList = updatedRoom.players.map(p => ({ name: p.name, playerID: p.playerCode, isHost: p.isHost }));
             
             socket.join(roomCode);//join socket.io room with room code as string
-            //callback event to joining player with room and player info
+            //callback event to joining player with room and playerList info
             callback({ status: 'success', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerName: playerName, playerCode: playerCode, playerList: playerList });
             // Notify all other clients in the room about the joining player
             // specifically .broadcast, sends to all sockets in .to(room) except sender
@@ -514,72 +564,51 @@ io.on('connection', (socket) => {
             callback({ status: 'error', message: 'Cannot guess location when game is not in-progress and voting state.' });
             return;
         }
-        //clear any existing timeouts
-        clearTimeout(room.gameTimeoutID);
-        clearTimeout(room.voteTimeoutID);
-        room.gameState = 'waiting';
-        await room.save();
-        let spies = room.players.filter(p => p.role === 'Spy').name;
+        
+        let spyArr = room.players.filter(p => p.role === 'Spy'); //subarray of players, who are spies
+        let spyNames = spyArr[0].name; // concat spy names togther into one string
+        if (spyArr.length == 2)
+            spyNames += ` and ${spyArr[1]}`;
+        // case for # of spies > 2
+        if (spyArr.length > 2){
+            for (i=1; i < spyArr.length; i++) {
+                if (i == spyArr.length-1) { // on last spy name
+                    spyNames += `, and ${spyArr[i].name}`;
+                } else {
+                    spyNames += `, ${spyArr[i].name}`;
+                }
+            }
+        }
+
         //check guessedLocation is valid
         room.location !== guessedLocation ?
-            io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy has guessed incorrectly. Non-Spies win! The location was ${room.location.name}. The Spy was ${spies}.` })
-            :
-            io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy has guessed correctly. Spies win! The location was ${room.location.name}. The Spy was ${spies}.` });
+        io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy has guessed incorrectly. Non-Spies win! The location was ${room.location.name}. The Spy was ${spyNames}.` })
+        :
+        io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy has guessed correctly. Spies win! The location was ${room.location.name}. The Spy was ${spyNames}.` });
         // fall through to reset game
         io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
+        await resetRoom(room);
     }));
 
     //player voluntarily leaves room
     socket.on('leaveRoom', withErrorHandling(async ({roomCode, playerCode}, callback) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
-        //assign new host if host left and players remain
-        let assignNewHost = false;
-        if (player.isHost && room.players.length > 1) {
-            assignNewHost = true;
-        }
-        //remove player from room by filtering out their socketID, allows for multiple connections per browser
-        room.players = room.players.filter(p => p.socketID !== socket.id);
-        if (assignNewHost) {
-            room.players[0].isHost = true; // assign first player as new host
-        }
-        await room.save();
+        await handleLeaveRoom(room, player, socket.id);
         socket.leave(roomCode); // arg needs to be string, case sensitivity matters
-        callback({ status: 'success', message: `You have left room: ${roomCode}.` });
         serverLog(`Player ${player.name} left room ${room.roomCode}.`);
-        //broadcast to other players in room
-        assignNewHost ?
-            io.to(room.roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room. ${room.players[0].name} is the new host.`, playerLeftName: player.name, newHostName: room.players[0].name })
-            :
-            io.to(room.roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room.`, playerLeftName: player.name });
-        
+        callback({ status: 'success', message: `You have left room: ${roomCode}.` });
     }));
 
     //player disconnects, treat as leaving room
     socket.on('disconnect', withErrorHandling(async () => {
         serverLog(`A user disconnected: ${socket.id}`);
-        //find room and player by socket id
-        const room = await Room.findOne({ 'players.socketID': socket.id });
+        //find room of player by socket id
+        let room = await Room.findOne({ 'players.socketID': socket.id });
         //remove player from room they were in
         if (room) {
             const player = room.players.find(p => p.socketID === socket.id);
-            //assign new host if host left and players remain
-            let assignNewHost = false;
-            if (player.isHost && room.players.length > 1) {
-                assignNewHost = true;
-            }
-            //remove player from room
-            room.players = room.players.filter(p => p.socketID !== socket.id);
-            if (assignNewHost) {
-                room.players[0].isHost = true; // assign first player as new host
-            }
-            await room.save();
+            await handleLeaveRoom(room, player, socket.id);
             serverLog(`Player ${player.name} disconnected and was removed from room ${room.roomCode}.`);
-            //notify all other players in room
-            assignNewHost ?
-                io.to(room.roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room. ${room.players[0].name} is the new host.`, playerLeftName: player.name, newHostName: room.players[0].name })
-                :
-                io.to(room.roomCode).emit('message', { type: 'playerLeftRoom', message: `${player.name} has left the room.`, playerLeftName: player.name });
-            
         }
     }));
 });
@@ -612,3 +641,10 @@ const conn = mongoose.connect(mongo_uri)
         console.error('Error connecting to MongoDB:', err.message);
         process.exit(1);
     });
+
+
+    /*
+    for reference
+    io.to(room)	Emits an event to all sockets within the specified room, including the sender.
+    socket.broadcast.to(room)	Emits an event to all sockets within the specified room, except the sender.
+    */

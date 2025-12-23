@@ -2,6 +2,7 @@
 import './App.css'
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import PlayerContext from './contexts/PlayerContext'; // object context for player info, holds getters and setters
+// possibly add a RoomContext to hold room state information, simplifying the amount of global vars
 
 import SetupCard from './components/SetupCard';
 import PlayerCard from './components/PlayerCard';
@@ -241,6 +242,7 @@ const App = () => {
                 case 'gameStarted':
                     setView('loading');
                     setLoadingMessage("Assigning roles...");
+                    //data payload still has endDate
                     break;
                 case 'roleAssigned':
                     setRole(data.role);
@@ -265,10 +267,10 @@ const App = () => {
                 case 'playerLeftRoom':
                     setRoomChat(prev => [...prev, data.message]);
                     //update player list
-                    setPlayerList(prev => prev.filter(p => p.name !== data.playerLeftName));
+                    setPlayerList(prev => prev.filter(p => p.playerID !== data.playerLeftID));
                     //update host status if needed
-                    if (data.newHostName) {
-                        setPlayerList(prev => prev.map(p => p.name === data.newHostName ? { ...p, isHost: true } : p));
+                    if (data.newHostID) {
+                        setPlayerList(prev => prev.map(p => p.playerID === data.newHostID ? { ...p, isHost: true } : p));
                     }
                     break;
                 default:
