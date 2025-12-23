@@ -344,7 +344,7 @@ const App = () => {
             case 'waiting': 
                 return (
                     <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
-                        <PlayerContext.Provider value={{roomCode, playerName}}>
+                        <PlayerContext.Provider value={{roomCode, playerName, playerCode}}>
 
                                 {/* Left Column: action card */}
                             <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6">
@@ -404,7 +404,7 @@ const App = () => {
             case 'in-progress':
                 return (
                     <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
-                        <PlayerContext.Provider value={{roomCode, playerName}}>
+                        <PlayerContext.Provider value={{roomCode, playerName, playerCode}}>
                             
                                 {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
                             <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6">

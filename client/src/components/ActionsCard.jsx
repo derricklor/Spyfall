@@ -1,15 +1,22 @@
 import Card from './Card';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 
 import PlayerContext from '../contexts/PlayerContext';
 
 // In-game control panel (players and actions)
 const ActionsCard = ({ playerList, view, onStartGame, OnCallVote, onEndGame }) => {
     //change available actions based on view state
-
+    
     const playerContextObj = useContext(PlayerContext);
-    //check if current player is host
-    const isHost = true;
+    let isHost = false;
+
+    // everytime playerList is changed, update isHost
+    useEffect(() => {
+        const hostObj = playerList.find(p => p.isHost === true && p.playerID === playerContextObj.playerCode);
+        if (hostObj)
+            isHost = true;
+    },[playerList]);
+    
     return (
         <div className="space-y-6">
             <Card title="Players" className="p-4">
