@@ -4,14 +4,12 @@ import { useContext } from 'react';
 import PlayerContext from '../contexts/PlayerContext';
 
 // In-game control panel (players and actions)
-const ActionsCard = ({ playerList, view, onStartGame, OnCallVote }) => {
+const ActionsCard = ({ playerList, view, onStartGame, OnCallVote, onEndGame }) => {
     //change available actions based on view state
 
     const playerContextObj = useContext(PlayerContext);
     //check if current player is host
-    const hostPlayerObj = playerList.find(p => p.isHost === true); // if no host, returns null
-
-    const isHost = (playerContextObj.playerName === hostPlayerObj.name); // if null, then no name property
+    const isHost = true;
     return (
         <div className="space-y-6">
             <Card title="Players" className="p-4">

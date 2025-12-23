@@ -462,6 +462,26 @@ io.on('connection', (socket) => {
     }));
     
 
+    // end game
+    socket.on('endGame', withErrorHandling(async ({roomCode, playerCode}, callback) => {
+        const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
+        //only host can end game
+        if (!player.isHost) { // player is not host
+            callback({ status: 'error', message: 'Only the host can end the game.' });
+            return;
+        }
+        //room must be in-progress
+        if (room.gameState !== 'in-progress') {
+            callback({ status: 'error', message: 'Room must be in-progress to end.' });
+            return;
+        }
+        await resetRoom(room);
+        callback({ status: 'success'});
+        // broadcast to everyone in room except sender
+        socket.broadcast.to(roomCode).emit('message', { type: 'resetRoom', message: 'The host has ended the game.' });
+
+    }));
+
     // start game
     socket.on('startGame', withErrorHandling(async ({roomCode, playerCode}, callback) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
@@ -525,7 +545,6 @@ io.on('connection', (socket) => {
             await room.save();
         }
     }));
-
 
     //player voted for someone
     socket.on('vote', withErrorHandling(async ({roomCode, playerCode, votedFor}, callback) => {

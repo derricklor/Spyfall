@@ -118,6 +118,20 @@ const App = () => {
             }
         });
     }
+    const endGame = (roomCode, playerCode) => {
+        socket.timeout(TIMEOUT_MS).emit("endGame", { roomCode, playerCode }, (err, response) =>{
+            if (err) {
+                console.error("Socket timeout starting game. Server did not respond in time.");
+                alert("Error ending game: Server did not respond. Please try again later.");
+                setRoomChat(prev => [...prev, "Error: Could not end game. The server did not respond."]);
+            } else if (response.status !== 'success') {
+                console.error("Error ending game. " + response.message);
+                setRoomChat(prev => [...prev, "Error ending game. " + response.message]);
+            } else { // else success
+                setRoomChat(prev => [...prev, "The host has ended the game."]);
+            }
+        });
+    };
 
     const startGame = (roomCode, playerCode) => {
         socket.timeout(TIMEOUT_MS).emit("startGame", { roomCode, playerCode }, (err, response) =>{
@@ -401,7 +415,7 @@ const App = () => {
                                     Leave Room
                                 </button>
                                 <PlayerCard location={location} role={role}/>
-                                <ActionsCard playerList={playerList} view={view} OnCallVote={callVote}/>
+                                <ActionsCard playerList={playerList} view={view} OnCallVote={callVote} onEndGame={endGame}/>
                             </div>
 
                                 {/* Middle Column: RoomChatHistory (middle) */}
