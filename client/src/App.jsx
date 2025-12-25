@@ -1,4 +1,3 @@
-
 import './App.css'
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import PlayerContext from './contexts/PlayerContext'; // object context for player info, holds getters and setters
@@ -12,6 +11,7 @@ import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
 import RevealRoleCard from './components/RevealRoleCard';
 import LoadingCard from './components/LoadingCard';
+import Toast from './components/Toast';
 
 import { io } from 'socket.io-client';
 
@@ -24,6 +24,19 @@ const App = () => {
     const [view, setView] = useState('lobby'); // 'lobby' || 'waiting' || 'revealrole' ||'in-progress' ||'vote' || 'loading'
     const [theme, setTheme] = useState('dark');
     const [loadingMessage, setLoadingMessage] = useState('');
+    const [toasts, setToasts] = useState([]); // Array of { id, message, variant }
+
+    const showToast = (message, variant = 'info') => {
+        const id = Date.now();
+        setToasts(prevToasts => [...prevToasts, { id, message, variant }]);
+        setTimeout(() => {
+            closeToast(id);
+        }, 3000); // Toast disappears after 3 seconds
+    };
+
+    const closeToast = (id) => {
+        setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
+    };
 
     // const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
     // const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
@@ -48,8 +61,10 @@ const App = () => {
             if (err) {  //server did not acknowledge in time
                 console.error("Socket timeout sending chat message. Server did not respond in time.");
                 setRoomChat(prev => [...prev, "*Socket timeout. Your message was not sent*"]);
+                showToast("Socket timeout sending chat message. Your message was not sent.", "error");
             } else if (response.status !== 'success') { // server replied with error
                 setRoomChat(prev => [...prev, "*Serve side error sending previous message*"]);
+                showToast("Server side error sending previous message.", "error");
             } else {// else success and update roomchat
                 setRoomChat(prev => [...prev, playerNameRef.current + ": " + message]);
             }
@@ -62,16 +77,17 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("createRoom", (err, response) => {
             if (err) {  //server did not acknowledge in time
                 console.error("Socket timeout creating room. Server did not respond in time.");
-                alert("Socket timeout error while creating room. Please try again later.");
+                showToast("Socket timeout error while creating room. Please try again later.", "error");
                 setView('lobby');
             } else if (response.status !== 'success') {
                 console.error("Error creating room.");
-                alert("Error creating room. Please try again.");
+                showToast("Error creating room. Please try again.", "error");
                 setView('lobby');
             } else { // else success
                 //get room code from server, then emit joinRoom to server
                 setRoomCode(response.roomCode);
                 setRoomChat(prev => [...prev, "Created room " + response.roomCode]);
+                showToast("Room " + response.roomCode + " created successfully!", "success");
                 joinRoom(response.roomCode, playerNameRef.current);
                 setErrorMessage(null);
             }
@@ -84,16 +100,18 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("joinRoom", { roomCode, inputName }, (err, response) => {
             if (err) {  //server did not acknowledge in time
                 console.error("Socket timeout joining room. Server did not respond in time.");
-                alert("Socket timeout error while joining room. Please try again later.");
+                showToast("Socket timeout error while joining room. Please try again later.", "error");
                 setView('lobby');
             } else if (response.status !== 'success') {
                 console.error("Error joining room. " + response.message);
                 setErrorMessage(response.message);
+                showToast("Error joining room: " + response.message, "error");
                 setView('lobby');
             } else { // else success
                 setView('waiting');
                 setPlayerName(response.playerName); //returned name could be different
                 setRoomChat(prev => [...prev, "Joined room " + roomCode]);
+                showToast("Joined room " + roomCode + " successfully!", "success");
                 setRoomCode(response.roomCode);
                 setPlayerCode(response.playerCode);
                 setPlayerList(response.playerList);
@@ -106,13 +124,15 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("leaveRoom", { roomCode, playerCode }, (err, response) => {
             if (err) {
                 console.error("Socket timeout leaving room. Server did not respond in time.");
-                alert("Socket timeout error while leaving room. Please try again later.");
+                showToast("Socket timeout error while leaving room. Please try again later.", "error");
             } else if (response.status !== 'success') {
                 console.error("Error leaving room. " + response.message);
                 setRoomChat(prev => [...prev, "Error leaving room. " + response.message]);
+                showToast("Error leaving room: " + response.message, "error");
             } else { // else success
                 setView('lobby');
                 setRoomChat(["Welcome to the room!"]);
+                showToast("Left room successfully.", "info");
                 console.log(response.message);
                 setErrorMessage(null);
             }
@@ -122,13 +142,15 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("endGame", { roomCode, playerCode }, (err, response) =>{
             if (err) {
                 console.error("Socket timeout starting game. Server did not respond in time.");
-                alert("Error ending game: Server did not respond. Please try again later.");
+                showToast("Error ending game: Server did not respond. Please try again later.", "error");
                 setRoomChat(prev => [...prev, "Error: Could not end game. The server did not respond."]);
             } else if (response.status !== 'success') {
                 console.error("Error ending game. " + response.message);
                 setRoomChat(prev => [...prev, "Error ending game. " + response.message]);
+                showToast("Error ending game: " + response.message, "error");
             } else { // else success
                 setRoomChat(prev => [...prev, "The host has ended the game."]);
+                showToast("Game ended by host.", "info");
             }
         });
     };
@@ -137,14 +159,16 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("startGame", { roomCode, playerCode }, (err, response) =>{
             if (err) {
                 console.error("Socket timeout starting game. Server did not respond in time.");
-                alert("Error starting game: Server did not respond. Please try again later.");
                 setRoomChat(prev => [...prev, "Error: Could not start game. The server did not respond."]);
+                showToast("Error starting game: Server did not respond. Please try again later.", "error");
             } else if (response.status !== 'success') {
                 console.error("Error starting game. " + response.message);
                 setRoomChat(prev => [...prev, "Error starting game. " + response.message]);
+                showToast("Error starting game: " + response.message, "error");
             } else { // else success
                 //wait for gameStarted event from server to update view and other info
                 setRoomChat(prev => [...prev, "Game is starting..."]);
+                showToast("Game is starting!", "success");
             }
         });
     };
@@ -153,13 +177,15 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("vote", { roomCode, playerCode, votedFor }, (err, response) => {
             if (err) {
                 console.error("Socket timeout submitting vote. Server did not respond in time.");
-                alert("Error submitting vote: Server did not respond. Please try again later.");
+                showToast("Error submitting vote: Server did not respond. Please try again later.", "error");
                 setRoomChat(prev => [...prev, "Error: Could not submit vote. The server did not respond."]);
             } else if (response.status !== 'success') {
                 console.error("Error submitting vote. " + response.message);
                 setRoomChat(prev => [...prev, "Error submitting vote. " + response.message]);
+                showToast("Error submitting vote: " + response.message, "error");
             } else { // else success
                 setRoomChat(prev => [...prev, "You have voted for " + votedFor]);
+                showToast("Your vote for " + votedFor + " has been cast.", "success");
             }
         });
     };
@@ -168,14 +194,16 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("callVote", { roomCode, playerCode }, (err, response) => {
             if (err) {
                 console.error("Socket timeout calling vote. Server did not respond in time.");
-                alert("Error calling vote: Server did not respond. Please try again later.");
+                showToast("Error calling vote: Server did not respond. Please try again later.", "error");
                 setRoomChat(prev => [...prev, "Error: Could not call vote. The server did not respond."]);
             } else if (response.status !== 'success') {
                 console.error("Error calling vote.");
                 setRoomChat(prev => [...prev, response.message]);
+                showToast("Error calling vote: " + response.message, "error");
             } else { // else success
                 setView('vote');
                 setRoomChat(prev => [...prev, response.message]);
+                showToast("Vote initiated!", "info");
                 // setVoteCountdownTargetDate(new Date(response.endDate));
             }
         });
@@ -185,14 +213,15 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("spyGuessLocation", { roomCode, playerCode, guessedLocation }, (err, response) => {
             if (err) {
                 console.error("Socket timeout submitting location guess. Server did not respond in time.");
-                alert("Error submitting location guess: Server did not respond. Please try again later.");
                 setRoomChat(prev => [...prev, "Error: Could not submit location guess. The server did not respond."]);
+                showToast("Error submitting location guess: Server did not respond. Please try again later.", "error");
             } else if (response.status !== 'success') {
                 console.error("Error submitting location guess. " + response.message);
                 setRoomChat(prev => [...prev, "Error submitting location guess. " + response.message]);
+                showToast("Error submitting location guess: " + response.message, "error");
             } else { // else success
                 //let server send announcement of result
-                
+                showToast("Location guess submitted.", "success");
             }
         });
     };
@@ -201,10 +230,10 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit('getLocations', (err, response) => {
             if (err) {
                 console.error("Socket timeout fetching locations. Server did not respond in time.");
-                alert("Error fetching locations: Server did not respond. Please try again later.");
+                showToast("Error fetching locations: Server did not respond. Please try again later.", "error");
             } else if (response.status !== 'success') {
                 console.error("Error fetching locations.");
-                alert("Error fetching locations. Please try again.");
+                showToast("Error fetching locations. Please try again.", "error");
             } else { // else success
                 setLocationsArr(response.locations); //array of objs
             }
@@ -248,24 +277,28 @@ const App = () => {
             switch (data.type) {
                 case 'error':
                     console.log('An error occurred. ' + data.message);
-                    alert('An error occurred: ' + data.message);
+                    showToast('An error occurred: ' + data.message, "error");
                     break;
                 case 'announcement':
                     setRoomChat(prev => [...prev, data.message]);
+                    showToast(data.message, "info");
                     break;
                 case 'gameStarted':
                     setView('loading');
                     setLoadingMessage("Assigning roles...");
+                    showToast("Game has started!", "success");
                     //data payload still has endDate
                     break;
                 case 'roleAssigned':
                     setRole(data.role);
                     setLocation(data.location);
                     setView('revealrole');
+                    showToast("Your role has been assigned.", "info");
                     break;
                 case 'voteCalled':
                     setView('vote');
                     setRoomChat(prev => [...prev, data.message]);
+                    showToast("A vote has been called!", "warning");
                     // setVoteCountdownTargetDate(new Date(data.endDate));
                     break;
                 case 'resetRoom':
@@ -273,10 +306,12 @@ const App = () => {
                     setRoomChat(prev => [...prev, data.message]);
                     setRole('');
                     setLocation('');
+                    showToast("Room has been reset.", "info");
                     break;
                 case 'playerJoined':
                     setRoomChat(prev => [...prev, data.message]);
                     setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// any player that joins cannot be host
+                    showToast(data.message, "info");
                     break;
                 case 'playerLeftRoom':
                     setRoomChat(prev => [...prev, data.message]);
@@ -286,6 +321,7 @@ const App = () => {
                     if (data.newHostID) {
                         setPlayerList(prev => prev.map(p => p.playerID === data.newHostID ? { ...p, isHost: true } : p));
                     }
+                    showToast(data.message, "info");
                     break;
                 default:
                     break;
@@ -456,6 +492,18 @@ const App = () => {
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("loading"); setLoadingMessage("test message..."); }}
                     >show loading view
                 </button>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('This is an info toast!', 'info')}>
+                    Show Info Toast
+                </button>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Success! Operation completed.', 'success')}>
+                    Show Success Toast
+                </button>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Warning: Something might be wrong.', 'warning')}>
+                    Show Warning Toast
+                </button>
+                <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Error: Something went wrong!', 'error')}>
+                    Show Error Toast
+                </button>
                 <button className="rounded-l" onClick={toggleTheme}>
                     {theme === 'dark' ?
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -480,9 +528,19 @@ const App = () => {
             <main className="w-full h-[calc(100vh-64px)] flex flex-col">
                 {renderView()}
             </main>
+            <div className="fixed bottom-20 right-8 z-50">
+                {toasts.map((toast, index) => (
+                    <Toast
+                        key={toast.id}
+                        message={toast.message}
+                        variant={toast.variant}
+                        onClose={() => closeToast(toast.id)}
+                        style={{ bottom: `${(index+1) * 5}rem` }}
+                    />
+                ))}
+            </div>
         </div>
     );
 };
 
 export default App;
-
