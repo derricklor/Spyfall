@@ -34,7 +34,7 @@ const RevealRoleCard = ({ role, location, onContinue }) => {
                     </p>
                 </div>
             </div>
-            <button className="flex items-center justify-center lg:mx-auto lg:w-1/2 gap-2 space-x-2 py-2 px-4 rounded-3xl font-medium transition 
+            <button className="flex items-center justify-center lg:mx-auto lg:w-1/2 gap-2 space-x-2 py-2 px-4 rounded-3xl font-medium transition text-[var(--dark)]
                 duration-200 shadow-md bg-[var(--primary)] hover:bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105" 
                 onClick={onContinue}>
                 Continue

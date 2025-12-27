@@ -9,13 +9,10 @@ const ActionsCard = ({ playerList, view, onStartGame, OnCallVote, onEndGame }) =
     
     const playerContextObj = useContext(PlayerContext);
     let isHost = false;
+    const hostElement = playerList.find(p => p.isHost == true);
+    if (hostElement && hostElement.playerID === playerContextObj.playerCode)
+        {isHost = true;}
 
-    // everytime playerList is changed, update isHost
-    useEffect(() => {
-        const hostObj = playerList.find(p => p.isHost === true && p.playerID === playerContextObj.playerCode);
-        if (hostObj)
-            isHost = true;
-    },[playerList]);
     
     return (
         <div className="space-y-6">
@@ -36,10 +33,10 @@ const ActionsCard = ({ playerList, view, onStartGame, OnCallVote, onEndGame }) =
                 {isHost && (view === 'waiting') ? ( // render if host and viewing waiting room
                     <div className="flex flex-col items-center space-y-4">
                         <span className="text-sm text-[var(--secondary-dark)] dark:text-[var(--secondary)]">You are the host. You can start the game when there are at least 3 players.</span>
-                        <button className={`text-[var(--dark)] dark:text-[var(--light)] bg-[var(--light)] dark:bg-[var(--secondary-dark)] rounded-lg p-2 transition duration-200 shadow-md
+                        <button className={`text-[var(--dark)] rounded-lg p-2 transition duration-200 shadow-md
                             ${playerList.length < 3 
                             ? 'bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] cursor-not-allowed hover:scale-95' 
-                            : 'bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105'}`} onClick={onStartGame} disabled={playerList.length < 3}>
+                            : 'bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105'}`} onClick={()=> onStartGame(playerContextObj.roomCode, playerContextObj.playerCode)} disabled={playerList.length < 3}>
                             Start Game
                         </button>
                     </div>
@@ -50,8 +47,8 @@ const ActionsCard = ({ playerList, view, onStartGame, OnCallVote, onEndGame }) =
 
                 {isHost && (view ==='in-progress') ? ( // render end game button if host and room is in-progress
                     <div>
-                        <button className="flex justify-center items-center rounded-3xl shadow-md text-[var(--dark)] dark:text-[var(--light)] ">
-                            onClick={endGame}
+                        <button className="text-[var(--dark)] rounded-lg p-2 transition duration-200 shadow-md bg-[var(--danger)] hover:brightness-80 hover:cursor-pointer hover:scale-105"
+                            onClick={()=> onEndGame(playerContextObj.roomCode, playerContextObj.playerCode)}>
                             End Game
                         </button>
                     </div>

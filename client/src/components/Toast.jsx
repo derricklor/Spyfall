@@ -1,15 +1,15 @@
 import React from 'react';
 
 const Toast = ({ variant = 'info', message, onClose, style }) => {
-    const baseClasses = "fixed right-4 flex items-center p-4 rounded-lg shadow-lg min-w-[300px] z-50 text-white";
+    const baseClasses = "fixed right-4 flex items-center p-4 rounded-lg shadow-lg min-w-[300px] z-50 text-[var(--dark)]";
     const iconBaseClasses = "w-8 h-8";
-    const closeButtonClasses = "ml-auto -mx-1.5 -my-1.5 bg-transparent text-white rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8";
+    const closeButtonClasses = "ml-auto -mx-1.5 -my-1.5 bg-transparent text-[var(--dark)] rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8";
 
     const variantClasses = {
-        info: "bg-blue-500",
-        success: "bg-green-500",
-        warning: "bg-yellow-500",
-        error: "bg-red-500",
+        info: "bg-[var(--primary)]",
+        success: "bg-[var(--success)]",
+        warning: "bg-[var(--warning)]",
+        error: "bg-[var(--danger)]",
     };
 
     const icons = {

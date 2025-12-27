@@ -4,7 +4,7 @@ import Card from './Card';
 
 const LoadingCard = ({ message }) => {
     return (
-        <Card title="" className="p-6 mt-6 w-100 h-full flex flex-col space-y-4 transition duration-500">
+        <Card title="" className="p-6 mt-6 w-80 h-full flex flex-col space-y-4 transition duration-500">
             <div className="space-y-4 pt-4">
                 <div className="flex flex-col items-center justify-center">
                     <div className="text-center mb-8">

@@ -634,6 +634,15 @@ io.on('connection', (socket) => {
 
 const GARBAGE_COLLECTION_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
+async function zeroOutRooms() {
+    try {
+        const result = await Room.deleteMany({});
+        serverLog(`Zeroed out rooms collection. Deleted ${result.deletedCount} rooms.`);
+    } catch (error) {
+        serverLog(`Error zeroing out rooms: ${error.message}`);
+    }
+}
+
 async function garbageCollectRooms() {
     serverLog('Garbage collecting finished rooms...');
     try {
@@ -651,7 +660,7 @@ const conn = mongoose.connect(mongo_uri)
         initDB().then(() => {
             server.listen(port, () => {
                 serverLog(`Server is running on port: ${port}`);
-                garbageCollectRooms(); //initial garbage collection on startup
+                zeroOutRooms(); // delete all rooms on server start
                 setInterval(garbageCollectRooms, GARBAGE_COLLECTION_INTERVAL);
             });
         });

@@ -26,18 +26,6 @@ const App = () => {
     const [loadingMessage, setLoadingMessage] = useState('');
     const [toasts, setToasts] = useState([]); // Array of { id, message, variant }
 
-    const showToast = (message, variant = 'info') => {
-        const id = Date.now();
-        setToasts(prevToasts => [...prevToasts, { id, message, variant }]);
-        setTimeout(() => {
-            closeToast(id);
-        }, 3000); // Toast disappears after 3 seconds
-    };
-
-    const closeToast = (id) => {
-        setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
-    };
-
     // const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
     // const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
     // const [countdownTime, setCountdownTime] = useState(0);
@@ -55,6 +43,18 @@ const App = () => {
     const [role, setRole] = useState(''); // player's role
     const [location, setLocation] = useState(''); // player's location
     const playerNameRef = useRef(playerName);
+
+    const showToast = (message, variant = 'info') => {
+        const id = Date.now();
+        setToasts(prevToasts => [...prevToasts, { id, message, variant }]);
+        setTimeout(() => {
+            closeToast(id);
+        }, 3000); // Toast disappears after 3 seconds
+    };
+
+    const closeToast = (id) => {
+        setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
+    };
 
     const sendChatMessage = (message) => {
         socket.timeout(TIMEOUT_MS).emit("chatMessage", { roomCode, playerCode, message }, (err, response) => {
@@ -149,8 +149,10 @@ const App = () => {
                 setRoomChat(prev => [...prev, "Error ending game. " + response.message]);
                 showToast("Error ending game: " + response.message, "error");
             } else { // else success
+                setView('lobby');
                 setRoomChat(prev => [...prev, "The host has ended the game."]);
                 showToast("Game ended by host.", "info");
+                setErrorMessage(null);
             }
         });
     };
@@ -484,25 +486,25 @@ const App = () => {
             <div className='fixed top-0 flex w-full bg-[var(--primary)] dark:bg-[var(--primary-dark)] shadow-xl p-4 items-center justify-between'>
                 <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("lobby") }}
-                    >show lobby view
+                    > lobby view
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("revealrole"); setRole("Ice cream vendor"); setLocation("Space station over antarctica"); }}>
-                    show reveal role view
+                     reveal role view
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("loading"); setLoadingMessage("test message..."); }}
-                    >show loading view
+                    > loading view
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('This is an info toast!', 'info')}>
-                    Show Info Toast
+                    Info Toast
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Success! Operation completed.', 'success')}>
-                    Show Success Toast
+                    Success Toast
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Warning: Something might be wrong.', 'warning')}>
-                    Show Warning Toast
+                    Warning Toast
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Error: Something went wrong!', 'error')}>
-                    Show Error Toast
+                    Error Toast
                 </button>
                 <button className="rounded-l" onClick={toggleTheme}>
                     {theme === 'dark' ?
