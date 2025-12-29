@@ -39,7 +39,6 @@ const App = () => {
     const [playerCode, setPlayerCode] = useState('');
     const [roomCode, setRoomCode] = useState('');
 
-    const [errorMessage, setErrorMessage] = useState(null); // change to general setup error e.g. 'unable to create room' || 'invalid room code'
     const [role, setRole] = useState(''); // player's role
     const [location, setLocation] = useState(''); // player's location
     const playerNameRef = useRef(playerName);
@@ -89,7 +88,6 @@ const App = () => {
                 setRoomChat(prev => [...prev, "Created room " + response.roomCode]);
                 showToast("Room " + response.roomCode + " created successfully!", "success");
                 joinRoom(response.roomCode, playerNameRef.current);
-                setErrorMessage(null);
             }
         });
     };
@@ -104,7 +102,6 @@ const App = () => {
                 setView('lobby');
             } else if (response.status !== 'success') {
                 console.error("Error joining room. " + response.message);
-                setErrorMessage(response.message);
                 showToast("Error joining room: " + response.message, "error");
                 setView('lobby');
             } else { // else success
@@ -115,7 +112,6 @@ const App = () => {
                 setRoomCode(response.roomCode);
                 setPlayerCode(response.playerCode);
                 setPlayerList(response.playerList);
-                setErrorMessage(null);
             }
         });
     };
@@ -134,7 +130,6 @@ const App = () => {
                 setRoomChat(["Welcome to the room!"]);
                 showToast("Left room successfully.", "info");
                 console.log(response.message);
-                setErrorMessage(null);
             }
         });
     }
@@ -152,7 +147,6 @@ const App = () => {
                 setView('lobby');
                 setRoomChat(prev => [...prev, "The host has ended the game."]);
                 showToast("Game ended by host.", "info");
-                setErrorMessage(null);
             }
         });
     };
@@ -196,8 +190,8 @@ const App = () => {
         socket.timeout(TIMEOUT_MS).emit("callVote", { roomCode, playerCode }, (err, response) => {
             if (err) {
                 console.error("Socket timeout calling vote. Server did not respond in time.");
-                showToast("Error calling vote: Server did not respond. Please try again later.", "error");
                 setRoomChat(prev => [...prev, "Error: Could not call vote. The server did not respond."]);
+                showToast("Error calling vote: Server did not respond. Please try again later.", "error");
             } else if (response.status !== 'success') {
                 console.error("Error calling vote.");
                 setRoomChat(prev => [...prev, response.message]);
@@ -370,8 +364,8 @@ const App = () => {
             case 'lobby':
                 return (
                     <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
-                        <PlayerContext.Provider value={{ playerName, setPlayerName, roomCode, setRoomCode, errorMessage }}>
-                            <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} errorMessage={errorMessage} />
+                        <PlayerContext.Provider value={{ playerName, setPlayerName, roomCode, setRoomCode }}>
+                            <SetupCard onCreateRoom={createRoom} onJoinRoom={joinRoom} />
                         </PlayerContext.Provider>
                     </div>);
             case 'loading':

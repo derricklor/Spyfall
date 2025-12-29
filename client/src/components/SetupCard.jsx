@@ -4,9 +4,9 @@ import Button from './Button'
 import PlayerContext from '../contexts/PlayerContext';
 
 // Lobby view for joining or creating a game
-const SetupCard = ({ onCreateRoom, onJoinRoom, errorMessage }) => {
+const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
     
-    // has properties from closest parent context: playerName, setPlayerName, roomCode, setRoomCode, errorMessage
+    // has properties from closest parent context: playerName, setPlayerName, roomCode, setRoomCode
     const playerContextObj = useContext(PlayerContext);
 
     const codeStyle = `h-16 w-16 p-2 bg-[var(--light)] dark:bg-[var(--secondary-dark)] border-2 border-[var(--secondary)] inset-shadow-sm/10 rounded-lg text-3xl text-[var(--dark)] dark:text-[var(--light)] text-center focus:outline-2 focus:outline-[var(--primary)]`
@@ -21,15 +21,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, errorMessage }) => {
         }
     }, []); //run only on initial render
 
-    //mark code input boxes invalid if invalidRoomCode prop is true
-    useEffect(() => {
-        const codebox = document.getElementById('codebox');
-        if (errorMessage) {
-            codebox.classList.add('border-2', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
-        } else {
-            codebox.classList.remove('border-2', 'border-[var(--danger)]', 'dark:border-[var(--danger-dark)]', 'bg-red-200', 'dark:bg-pink-900/30');
-        }
-    }, [errorMessage]);
+    
 
     const onPasteCode = (e) => {
         //check if pasted data exists
@@ -134,10 +126,6 @@ const SetupCard = ({ onCreateRoom, onJoinRoom, errorMessage }) => {
                         className={codeStyle}/>
                     <input type="text" maxLength="1" pattern="^[a-zA-Z0-9]?$" id='code4' previnput='code3' onPaste={onPasteCode} onKeyUp={onKeyUpCode}
                         className={codeStyle}/>
-                </div>
-                <div className="text-center">
-                    
-                    {errorMessage != null ? <p className="text-lg font-semibold text-[var(--danger)] dark:text-[var(--danger-dark)]">{errorMessage}</p> : ''}
                 </div>
             </div>
 

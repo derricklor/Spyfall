@@ -52,7 +52,16 @@ const ActionsCard = ({ playerList, view, onStartGame, OnCallVote, onEndGame }) =
                             End Game
                         </button>
                     </div>
-                ) : '' }
+                ) : ''}
+
+                {view === 'in-progress' ? ( // render call vote button if room is in-progress
+                    <div>
+                        <button className="text-[var(--dark)] rounded-lg p-2 transition duration-200 shadow-md bg-[var(--danger)] hover:brightness-80 hover:cursor-pointer hover:scale-105"
+                            onClick={()=> OnCallVote(playerContextObj.roomCode, playerContextObj.playerCode)}>
+                            Call Vote
+                        </button>
+                    </div>
+                ): ''}
 
             </Card>
 
