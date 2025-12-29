@@ -169,8 +169,8 @@ const App = () => {
         });
     };
 
-    const vote = (roomCode, playerCode, votedFor) => {
-        socket.timeout(TIMEOUT_MS).emit("vote", { roomCode, playerCode, votedFor }, (err, response) => {
+    const vote = (roomCode, playerCode, votedForID) => {
+        socket.timeout(TIMEOUT_MS).emit("vote", { roomCode, playerCode, votedForID }, (err, response) => {
             if (err) {
                 console.error("Socket timeout submitting vote. Server did not respond in time.");
                 showToast("Error submitting vote: Server did not respond. Please try again later.", "error");
@@ -180,8 +180,8 @@ const App = () => {
                 setRoomChat(prev => [...prev, "Error submitting vote. " + response.message]);
                 showToast("Error submitting vote: " + response.message, "error");
             } else { // else success
-                setRoomChat(prev => [...prev, "You have voted for " + votedFor]);
-                showToast("Your vote for " + votedFor + " has been cast.", "success");
+                setRoomChat(prev => [...prev, "Your vote has been cast"]);
+                showToast("Your vote has been cast.", "success");
             }
         });
     };
@@ -447,7 +447,7 @@ const App = () => {
                                     Leave Room
                                 </button>
                                 <PlayerCard location={location} role={role}/>
-                                <ActionsCard playerList={playerList} view={view} OnCallVote={callVote} onEndGame={endGame}/>
+                                <ActionsCard playerList={playerList} view={view} onCallVote={callVote} onEndGame={endGame}/>
                             </div>
 
                                 {/* Middle Column: RoomChatHistory (middle) */}
@@ -464,7 +464,7 @@ const App = () => {
             case 'vote':
                 return (
                     <div className="grid grid-cols-1 gap-6 w-full h-full p-4">
-                        <PlayerContext.Provider value={{roomCode, playerCode, playerName}}>
+                        <PlayerContext.Provider value={{roomCode, playerCode}}>
                             <VoteCard playerList={playerList} onVote={vote}/>                    
                         </PlayerContext.Provider>
                     </div>);

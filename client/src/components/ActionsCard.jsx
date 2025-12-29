@@ -4,7 +4,7 @@ import { useContext, useEffect } from 'react';
 import PlayerContext from '../contexts/PlayerContext';
 
 // In-game control panel (players and actions)
-const ActionsCard = ({ playerList, view, onStartGame, OnCallVote, onEndGame }) => {
+const ActionsCard = ({ playerList, view, onStartGame, onCallVote, onEndGame }) => {
     //change available actions based on view state
     
     const playerContextObj = useContext(PlayerContext);
@@ -57,7 +57,7 @@ const ActionsCard = ({ playerList, view, onStartGame, OnCallVote, onEndGame }) =
                 {view === 'in-progress' ? ( // render call vote button if room is in-progress
                     <div>
                         <button className="text-[var(--dark)] rounded-lg p-2 transition duration-200 shadow-md bg-[var(--danger)] hover:brightness-80 hover:cursor-pointer hover:scale-105"
-                            onClick={()=> OnCallVote(playerContextObj.roomCode, playerContextObj.playerCode)}>
+                            onClick={()=> onCallVote(playerContextObj.roomCode, playerContextObj.playerCode)}>
                             Call Vote
                         </button>
                     </div>
