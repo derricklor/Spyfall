@@ -5,7 +5,7 @@ import PlayerContext from '../contexts/PlayerContext';
 const VoteCard = ({playerList, onVote}) => {
     const playerContextObject = useContext(PlayerContext);
 
-    const [voteFor, setVotedFor] = useState(""); // holds id of player to vote as spy
+    const [voteForID, setVotedForID] = useState(""); // holds id of player to vote as spy
     //filter out current player from list, as you cannot vote for yourself
     const [newPlayerList, setNewPlayerList] = useState(playerList); // make copy of playerList
     setNewPlayerList(newPlayerList.filter(p=> p.playerID !== playerContextObject.playerCode));
@@ -18,14 +18,12 @@ const VoteCard = ({playerList, onVote}) => {
                         key={player.id}
                         disabled={playerContextObject.playerName === player.name}
                         onClick={() => {
-                            setVotedFor(player.name)
-                            onVote(playerContextObject.roomCode, playerContextObject.playerCode, player.playerID)
-                        }} //(roomCode, playerCode, votedFor)
+                            setVotedForID(player.id)
+                        }} 
                         className={`w-full py-3 rounded-lg text-lg font-medium text-[var(--dark)] dark:text-[var(--light)] disabled:cursor-not-allowed 
                             disabled:bg-[var(--secondary)] dark:disabled:bg-[var(--secondary-dark)] dark:disabled:border dark:disabled:border-[var(--secondary)]
-                            transition duration-200
-                            ${voteFor === player.playerID ? 'ring-4 ring-[var(--primary)] scale-105' : ''}
-                            bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 `}
+                            transition duration-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 
+                            ${voteForID === player.playerID ? 'ring-4 ring-[var(--primary)] scale-105' : ''} `}
                     >
                         <span className="text-xl">{player.name}</span>
 
@@ -33,7 +31,9 @@ const VoteCard = ({playerList, onVote}) => {
                 ))}
             </div>
             <div className="">
-
+                <button onClick={()=> onVote(playerContextObject.roomCode, playerContextObject.playerCode, voteForID)}>
+                    submit vote
+                </button>
             </div>
         </Card>
     );

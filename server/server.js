@@ -199,7 +199,7 @@ async function finalVote(roomCode) {
             }
         } else {
             //no one eliminated, spy wins
-            const spyNames = getSpyNames(endedRoom);
+            const spyNames = getSpyNames(updatedRoom);
             io.to(roomCode).emit('message', { type: 'announcement', message: `No player was eliminated. The Spy wins! The Spy was ${spyNames}. The location was ${updatedRoom.location.name}.` });
             await resetRoom(updatedRoom);
             io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
@@ -390,7 +390,7 @@ io.on('connection', (socket) => {
                 updatedRoom.gameState = 'in-progress';
                 updatedRoom.voteOffCooldown = new Date(Date.now() + 1 * 60 * 1000); // set cooldown to 1 minute from end of vote
                 await updatedRoom.save();
-                io.to(roomCode).emit('message', { type: 'announcement', message: 'The game has resumed.' });
+                io.to(roomCode).emit('message', { type: 'announcement', message: 'No one was voted as Spy. The game has resumed.' });
             }
         }, 0.5 * 60 * 1000); // 30 seconds
         await room.save();
