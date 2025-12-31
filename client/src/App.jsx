@@ -44,7 +44,7 @@ const App = () => {
     const playerNameRef = useRef(playerName);
 
     const showToast = (message, variant = 'info') => {
-        const id = Date.now();
+        const id = crypto.randomUUID();
         setToasts(prevToasts => [...prevToasts, { id, message, variant }]);
         setTimeout(() => {
             closeToast(id);
@@ -144,7 +144,7 @@ const App = () => {
                 setRoomChat(prev => [...prev, "Error ending game. " + response.message]);
                 showToast("Error ending game: " + response.message, "error");
             } else { // else success
-                setView('lobby');
+                setView('waiting');
                 setRoomChat(prev => [...prev, "The host has ended the game."]);
                 showToast("Game ended by host.", "info");
             }
@@ -277,11 +277,12 @@ const App = () => {
                     break;
                 case 'announcement':
                     setRoomChat(prev => [...prev, data.message]);
-                    showToast(data.message, "info");
+                    //showToast(data.message, "info");
                     break;
                 case 'gameStarted':
                     setView('loading');
                     setLoadingMessage("Assigning roles...");
+                    setRoomChat(prev => [...prev, data.message]);
                     showToast("Game has started!", "success");
                     //data payload still has endDate
                     break;
@@ -463,7 +464,7 @@ const App = () => {
                     </div>);
             case 'vote':
                 return (
-                    <div className="grid grid-cols-1 gap-6 w-full h-full p-4">
+                    <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerCode}}>
                             <VoteCard playerList={playerList} onVote={vote}/>                    
                         </PlayerContext.Provider>
