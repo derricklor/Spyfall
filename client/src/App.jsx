@@ -26,10 +26,12 @@ const App = () => {
     const [loadingMessage, setLoadingMessage] = useState('');
     const [toasts, setToasts] = useState([]); // Array of { id, message, variant }
 
-    // const [voteCountdownTargetDate, setVoteCountdownTargetDate] = useState(null);
-    // const [gameCountdownTargetDate, setGameCountdownTargetDate] = useState(null);
-    // const [countdownTime, setCountdownTime] = useState(0);
+    const [voteEndDate, setVoteEndDate] = useState(null);
+    const [gameEndDate, setGameEndDate] = useState(null);
+    const [countdown, setCountdown] = useState("");
+    const [isGameRunning, setIsGameRunning] = useState(false);
     const [isCodeCopied, setIsCodeCopied] = useState(false);
+    const [remainingGameTime, setRemainingGameTime] = useState(0); // in seconds
 
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [locationsArr, setLocationsArr] = useState([]);
@@ -147,6 +149,7 @@ const App = () => {
                 setView('waiting');
                 setRoomChat(prev => [...prev, "The host has ended the game."]);
                 showToast("Game ended by host.", "info");
+                setIsGameRunning(false);
             }
         });
     };
@@ -200,7 +203,7 @@ const App = () => {
                 setView('vote');
                 setRoomChat(prev => [...prev, response.message]);
                 showToast("Vote initiated!", "info");
-                // setVoteCountdownTargetDate(new Date(response.endDate));
+                setVoteEndDate(new Date(response.endDate));
             }
         });
     };
@@ -245,27 +248,43 @@ const App = () => {
         getLocations();
     }, []);
 
-    // vote countdown timer effect
-    // useEffect(() => {
-    //     const startSec = Math.floor((voteCountdownTargetDate - new Date()) / 1000);
-    //     setCountdownTime(startSec);
-    //     const timer = setInterval(() => {
-    //         setCountdownTime(countdownTime - 1);
-    //     }, 1000);
-
-    //     return () => clearInterval(timer); // Cleanup on unmount
-    // }, [voteCountdownTargetDate]);
 
     // game countdown timer effect
-    // useEffect(() => {
-    //     const startSec = Math.floor((gameCountdownTargetDate - new Date()) / 1000);
-    //     setCountdownTime(startSec);
-    //     const timer = setInterval(() => {
-    //         setCountdownTime(countdownTime - 1);
-    //     }, 1000);
+    useEffect(() => {
+        if (!gameEndDate || !isGameRunning) return;
 
-    //     return () => clearInterval(timer); // Cleanup on unmount
-    // }, [gameCountdownTargetDate]);
+        // Calculate initial remaining time in seconds
+        const initialTimeInSeconds = Math.floor((gameEndDate.getTime() - new Date().getTime()) / 1000);
+        setRemainingGameTime(initialTimeInSeconds);
+
+        const timer = setInterval(() => {
+            setRemainingGameTime(prevTime => {
+                const newTime = prevTime - 1; // Decrement by 1 second
+                if (newTime < 0) {
+                    clearInterval(timer);
+                    setCountdown("00:00");
+                    setIsGameRunning(false); // Or handle game end
+                    return 0;
+                }
+                return newTime;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer); // Cleanup on unmount
+    }, [gameEndDate, isGameRunning]);
+
+    useEffect(() => {
+        if (remainingGameTime < 0) {
+            setCountdown("00:00");
+            return;
+        }
+
+        const minutes = Math.floor(remainingGameTime / 60);
+        const seconds = remainingGameTime % 60;
+
+        setCountdown(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    }, [remainingGameTime]);
+
 
     //on first mount, setup socket event listeners
     useEffect(() => {
@@ -284,7 +303,8 @@ const App = () => {
                     setLoadingMessage("Assigning roles...");
                     setRoomChat(prev => [...prev, data.message]);
                     showToast("Game has started!", "success");
-                    //data payload still has endDate
+                    setGameEndDate(new Date(data.endDate));
+                    setIsGameRunning(true);
                     break;
                 case 'roleAssigned':
                     setRole(data.role);
@@ -296,7 +316,7 @@ const App = () => {
                     setView('vote');
                     setRoomChat(prev => [...prev, data.message]);
                     showToast("A vote has been called!", "warning");
-                    // setVoteCountdownTargetDate(new Date(data.endDate));
+                    setVoteEndDate(new Date(data.endDate));
                     break;
                 case 'resetRoom':
                     setView('waiting');
@@ -304,6 +324,7 @@ const App = () => {
                     setRole('');
                     setLocation('');
                     showToast("Room has been reset.", "info");
+                    setIsGameRunning(false);
                     break;
                 case 'playerJoined':
                     setRoomChat(prev => [...prev, data.message]);
@@ -466,7 +487,7 @@ const App = () => {
                 return (
                     <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerCode}}>
-                            <VoteCard playerList={playerList} onVote={vote}/>                    
+                            <VoteCard playerList={playerList} onVote={vote} voteEndDate={voteEndDate} />
                         </PlayerContext.Provider>
                     </div>);
             default:
@@ -480,6 +501,7 @@ const App = () => {
         <div className="min-h-screen bg-[var(--light)] dark:bg-[var(--dark)] text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4 transition duration-500">
             <div className='fixed top-0 flex w-full bg-[var(--primary)] dark:bg-[var(--primary-dark)] shadow-xl p-4 items-center justify-between'>
                 <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
+                {isGameRunning && <div className="text-2xl font-bold">{countdown}</div>}
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("lobby") }}
                     > lobby view
                 </button>
