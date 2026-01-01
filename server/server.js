@@ -153,13 +153,13 @@ function getSpyNames(roomDocument) {
 
 async function finalVote(roomCode) {
     //get latest updated room
-    const room = await Room.find({ roomCode });
+    let room = await Room.findOne({ roomCode });
     if (room) {
-        //reset all players' votedFor to null
         room.gameState = 'voting';
         room.players.forEach(p => p.votedFor = null);
     }
     await room.save();
+    const location = await Location.findById(room.location);
     const endDate = new Date(Date.now() + 60*1000); // 60 seconds from now
     // notify all players final vote has started
     io.to(roomCode).emit('message', { type: 'voteCalled', message: 'Final Voting has started. Please vote to eliminate the spy.', endDate: endDate });
@@ -183,8 +183,8 @@ async function finalVote(roomCode) {
                     //if spy has not guessed yet, non-spies win
                     const endedRoom = await Room.findOne({ roomCode });
                     if (endedRoom) {
-                        const spyNames = getSpyNames(endedRoom);
-                        io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy did not guess in time. Non-Spies win! The Spy was ${spyNames}. The location was ${endedRoom.location.name}.` });
+                            const spyNames = getSpyNames(endedRoom);
+                            io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy did not guess in time. Non-Spies win! The Spy was ${spyNames}. The location was ${location.name}.` });
                         await resetRoom(endedRoom);
                         io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
                     }
@@ -193,14 +193,14 @@ async function finalVote(roomCode) {
             } else {
                 //non-spy eliminated, spies win, reveal the spies
                 const spyNames = getSpyNames(endedRoom);
-                io.to(roomCode).emit('message', { type: 'announcement', message: `The eliminated player was not the Spy. The Spy was ${spyNames}. The location was ${updatedRoom.location.name}.` });
+                io.to(roomCode).emit('message', { type: 'announcement', message: `The eliminated player was not the Spy. The Spy was ${spyNames}. The location was ${location.name}.` });
                 await resetRoom(updatedRoom);
                 io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
             }
         } else {
             //no one eliminated, spy wins
             const spyNames = getSpyNames(updatedRoom);
-            io.to(roomCode).emit('message', { type: 'announcement', message: `No player was eliminated. The Spy wins! The Spy was ${spyNames}. The location was ${updatedRoom.location.name}.` });
+            io.to(roomCode).emit('message', { type: 'announcement', message: `No player was eliminated. The Spy wins! The Spy was ${spyNames}. The location was ${location.name}.` });
             await resetRoom(updatedRoom);
             io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
             
@@ -346,7 +346,7 @@ io.on('connection', (socket) => {
         room.gameState = 'voting';
         room.players.forEach(p => p.votedFor = null);
         await room.save();
-        
+        const location = await Location.findById(room.location);
         let endDate = new Date(Date.now() + 0.5 * 60 * 1000); // 30 seconds from now
         // notify all players in room that a vote has been called
         io.to(roomCode).emit('message', { type: 'voteCalled', message: `${player.name} has called for a vote.`, endDate: endDate  });
@@ -372,7 +372,7 @@ io.on('connection', (socket) => {
                         const endedRoom = await Room.findOne({ roomCode });
                         if (endedRoom) {
                             const spyNames = getSpyNames(endedRoom);
-                            io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy did not guess in time. Non-Spies win! The Spy was ${spyNames}. The location was ${endedRoom.location.name}.` });
+                            io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy did not guess in time. Non-Spies win! The Spy was ${spyNames}. The location was ${location.name}.` });
                             await resetRoom(endedRoom);
                             io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
                         }
@@ -381,7 +381,7 @@ io.on('connection', (socket) => {
                 } else {
                     //non-spy eliminated, spies win, reveal the spies
                     const spyNames = getSpyNames(endedRoom);
-                    io.to(roomCode).emit('message', { type: 'announcement', message: `The eliminated player was not the Spy. The Spy was ${spyNames}. The location was ${updatedRoom.location.name}.` });
+                    io.to(roomCode).emit('message', { type: 'announcement', message: `The eliminated player was not the Spy. The Spy was ${spyNames}. The location was ${location.name}.` });
                     await resetRoom(updatedRoom);
                     io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
                 }

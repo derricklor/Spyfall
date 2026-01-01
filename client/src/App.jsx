@@ -484,6 +484,7 @@ const App = () => {
                         </PlayerContext.Provider>
                     </div>);
             case 'vote':
+                // todo: make chat card visible, show player card, fix vote selection
                 return (
                     <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerCode}}>
