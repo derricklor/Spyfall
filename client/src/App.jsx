@@ -31,7 +31,7 @@ const App = () => {
     const [countdown, setCountdown] = useState("");
     const [isGameRunning, setIsGameRunning] = useState(false);
     const [isCodeCopied, setIsCodeCopied] = useState(false);
-    const [remainingGameTime, setRemainingGameTime] = useState(0); // in seconds
+
 
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [locationsArr, setLocationsArr] = useState([]);
@@ -107,13 +107,13 @@ const App = () => {
                 showToast("Error joining room: " + response.message, "error");
                 setView('lobby');
             } else { // else success
-                setView('waiting');
-                setPlayerName(response.playerName); //returned name could be different
                 setRoomChat(prev => [...prev, "Joined room " + roomCode]);
-                showToast("Joined room " + roomCode + " successfully!", "success");
                 setRoomCode(response.roomCode);
+                setPlayerName(response.playerName); //returned name could be different
                 setPlayerCode(response.playerCode);
                 setPlayerList(response.playerList);
+                setView('waiting');
+                showToast("Joined room " + roomCode + " successfully!", "success");
             }
         });
     };
@@ -155,15 +155,19 @@ const App = () => {
     };
 
     const startGame = (roomCode, playerCode) => {
+        setView('loading');
+        setLoadingMessage("Starting game...");
         socket.timeout(TIMEOUT_MS).emit("startGame", { roomCode, playerCode }, (err, response) =>{
             if (err) {
                 console.error("Socket timeout starting game. Server did not respond in time.");
                 setRoomChat(prev => [...prev, "Error: Could not start game. The server did not respond."]);
                 showToast("Error starting game: Server did not respond. Please try again later.", "error");
+                setView('waiting');
             } else if (response.status !== 'success') {
                 console.error("Error starting game. " + response.message);
                 setRoomChat(prev => [...prev, "Error starting game. " + response.message]);
                 showToast("Error starting game: " + response.message, "error");
+                setView('waiting');
             } else { // else success
                 //wait for gameStarted event from server to update view and other info
                 setRoomChat(prev => [...prev, "Game is starting..."]);
@@ -253,37 +257,25 @@ const App = () => {
     useEffect(() => {
         if (!gameEndDate || !isGameRunning) return;
 
-        // Calculate initial remaining time in seconds
-        const initialTimeInSeconds = Math.floor((gameEndDate.getTime() - new Date().getTime()) / 1000);
-        setRemainingGameTime(initialTimeInSeconds);
-
         const timer = setInterval(() => {
-            setRemainingGameTime(prevTime => {
-                const newTime = prevTime - 1; // Decrement by 1 second
-                if (newTime < 0) {
-                    clearInterval(timer);
-                    setCountdown("00:00");
-                    setIsGameRunning(false); // Or handle game end
-                    return 0;
-                }
-                return newTime;
-            });
+            const now = new Date().getTime();
+            const distance = gameEndDate.getTime() - now;
+
+            if (distance < 0) {
+                clearInterval(timer);
+                setCountdown("00:00");
+                setIsGameRunning(false); // Or handle game end
+                return;
+            }
+
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            setCountdown(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
         }, 1000);
 
-        return () => clearInterval(timer); // Cleanup on unmount
+        return () => clearInterval(timer); // Cleanup on unmount or re-render
     }, [gameEndDate, isGameRunning]);
-
-    useEffect(() => {
-        if (remainingGameTime < 0) {
-            setCountdown("00:00");
-            return;
-        }
-
-        const minutes = Math.floor(remainingGameTime / 60);
-        const seconds = remainingGameTime % 60;
-
-        setCountdown(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-    }, [remainingGameTime]);
 
 
     //on first mount, setup socket event listeners
@@ -328,13 +320,12 @@ const App = () => {
                     break;
                 case 'playerJoined':
                     setRoomChat(prev => [...prev, data.message]);
-                    setPlayerList(prev => [...prev, { name: data.playerName, isHost: false }]);// any player that joins cannot be host
+                    setPlayerList(prev => [...prev, { name: data.playerName, playerID: data.playerID, isHost: false }]);// any player that joins cannot be host
                     showToast(data.message, "info");
                     break;
                 case 'playerLeftRoom':
                     setRoomChat(prev => [...prev, data.message]);
-                    //update player list
-                    setPlayerList(prev => prev.filter(p => p.playerID !== data.playerLeftID));
+                    setPlayerList(prev => prev.filter(p => p.playerID !== data.playerLeftID));//update player list
                     //update host status if needed
                     if (data.newHostID) {
                         setPlayerList(prev => prev.map(p => p.playerID === data.newHostID ? { ...p, isHost: true } : p));
@@ -401,7 +392,7 @@ const App = () => {
                         <PlayerContext.Provider value={{roomCode, playerName, playerCode}}>
 
                                 {/* Left Column: action card */}
-                            <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6">
+                            <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6  mt-6">
                                 <button onClick={() => {leaveRoom(roomCode, playerCode); }} // wait for leftRoom handler to get response
                                     className="flex items-center gap-2 bg-[var(--warning)] dark:bg-[var(--warning-dark)] hover:bg-[var(--warning-dark)] dark:hover:bg-yellow-600 text-black 
                                     py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
@@ -461,13 +452,14 @@ const App = () => {
                         <PlayerContext.Provider value={{roomCode, playerName, playerCode}}>
                             
                                 {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
-                            <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6">
+                            <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6 mt-6">
                                 <button onClick={() => { leaveRoom(roomCode, playerCode);
                                     }} // wait for leftRoom handler to get response
                                     className="flex items-center gap-2 bg-[var(--warning)] dark:bg-[var(--warning-dark)] hover:bg-[var(--warning-dark)] dark:hover:bg-yellow-600 text-black 
                                     py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
                                     Leave Room
                                 </button>
+                                {isGameRunning && <div className="text-2xl font-bold">{countdown}</div>}
                                 <PlayerCard location={location} role={role}/>
                                 <ActionsCard playerList={playerList} view={view} onCallVote={callVote} onEndGame={endGame}/>
                             </div>
@@ -486,9 +478,14 @@ const App = () => {
             case 'vote':
                 // todo: make chat card visible, show player card, fix vote selection
                 return (
-                    <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
-                        <PlayerContext.Provider value={{roomCode, playerCode}}>
-                            <VoteCard playerList={playerList} onVote={vote} voteEndDate={voteEndDate} />
+                    <div className="grid lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
+                        <PlayerContext.Provider value={{roomCode, playerName, playerCode}}>
+                            <div className="col-span-1 lg:col-start-1 lg:col-span-2 xl:col-start-2 xl:col-span-2 space-y-6">
+                                <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
+                            </div>
+                            <div className="col-span-1 lg:col-start-3 xl:col-start-4 space-y-6">
+                                <VoteCard playerList={playerList} onVote={vote} voteEndDate={voteEndDate} />
+                            </div>
                         </PlayerContext.Provider>
                     </div>);
             default:
@@ -502,7 +499,6 @@ const App = () => {
         <div className="min-h-screen bg-[var(--light)] dark:bg-[var(--dark)] text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4 transition duration-500">
             <div className='fixed top-0 flex w-full bg-[var(--primary)] dark:bg-[var(--primary-dark)] shadow-xl p-4 items-center justify-between'>
                 <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
-                {isGameRunning && <div className="text-2xl font-bold">{countdown}</div>}
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("lobby") }}
                     > lobby view
                 </button>

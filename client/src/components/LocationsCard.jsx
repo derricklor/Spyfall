@@ -10,7 +10,7 @@ const LocationsCard = ({locationsArr, serverURL}) => { //destructure locationsAr
     }
 
     return (
-        <Card title="Locations" className="h-fit">
+        <Card title="Locations" className="p-6 h-fit mt-6 transition duration-500">
             <div className="grid grid-cols-3 gap-3">
                 {locationsArr?.map((element) => (
                     <Card title={element.name} key={element._id}>

@@ -21,7 +21,7 @@ const RoomChatCard = ({roomChat, sendChatMessage}) => {
     }, [roomChat]);
 
     return (
-        <Card title="Room Chat" className="p-4 h-fit flex flex-col">
+        <Card title="Room Chat" className="p-6 mt-6 h-full flex flex-col space-y-4 transition duration-500">
             <div ref={chatContainerRef} className="flex-grow overflow-y-auto mb-4 h-96">
                 {roomChat.map((msg, index) => (
                     <div key={index} className="mb-2">

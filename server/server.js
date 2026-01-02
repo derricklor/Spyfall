@@ -367,6 +367,7 @@ io.on('connection', (socket) => {
                     io.to(roomCode).emit('message', { type: 'announcement', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.', endDate: endDate });
                     //set timeout for spy to guess location in 30 seconds
                     clearTimeout(updatedRoom.voteTimeoutID); //clear previous timeout and set new one
+                    clearTimeout(updatedRoom.gameTimeoutID); // also clear game timeout
                     updatedRoom.voteTimeoutID = setTimeout(async () => {
                         //if spy has not guessed yet, non-spies win
                         const endedRoom = await Room.findOne({ roomCode });
@@ -453,7 +454,6 @@ io.on('connection', (socket) => {
                 await Room.updateOne({ roomCode }, { $push: { players: { name: playerName, playerCode: playerCode, socketID: socket.id } } });
             }
             // non required will be assigned later
-            await room.save();
             
             const updatedRoom = await Room.findOne({ roomCode });// get latest room data
             // map returns new array populated by values returned from function, which is object with name, playerCode, isHost
@@ -462,9 +462,9 @@ io.on('connection', (socket) => {
             socket.join(roomCode);//join socket.io room with room code as string
             //callback event to joining player with room and playerList info
             callback({ status: 'success', message: `Joined room: ${roomCode}.`, roomCode: roomCode, playerName: playerName, playerCode: playerCode, playerList: playerList });
-            // Notify all other clients in the room about the joining player
+            // Notify all other clients in the room about the joining player, their name and ID
             // specifically .broadcast, sends to all sockets in .to(room) except sender
-            socket.broadcast.to(roomCode).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName}); 
+            socket.broadcast.to(roomCode).emit('message', { type: 'playerJoined', message: `${playerName} has joined.`, playerName: playerName, playerID: playerCode }); 
             serverLog(`Player ${playerName} joined room ${roomCode}.`);
         } else {
             //handle room not found
@@ -575,7 +575,6 @@ io.on('connection', (socket) => {
             { $set: { 'players.$.votedFor': votedForID } }); 
             //.$. is positional operator to update matched array element from query
         
-        await room.save();
         callback({ status: 'success'});
     }));
 

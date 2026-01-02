@@ -15,8 +15,7 @@ const ActionsCard = ({ playerList, view, onStartGame, onCallVote, onEndGame }) =
 
     
     return (
-        <div className="space-y-6">
-            <Card title="Players" className="p-4">
+            <Card title="Players" className="p-6 mt-6 h-fit flex flex-col space-y-4 transition duration-500">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
 
                     {playerList.map((player) => (
@@ -64,8 +63,6 @@ const ActionsCard = ({ playerList, view, onStartGame, onCallVote, onEndGame }) =
                 ): ''}
 
             </Card>
-
-        </div>
     );
 };
 
