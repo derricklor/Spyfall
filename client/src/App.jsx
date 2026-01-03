@@ -1,5 +1,6 @@
 import './App.css'
 import React, { useState, useEffect, useRef, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import PlayerContext from './contexts/PlayerContext'; // object context for player info, holds getters and setters
 // possibly add a RoomContext to hold room state information, simplifying the amount of global vars
 
@@ -21,7 +22,7 @@ const TIMEOUT_MS = 5000;
 
 // --- Main App Component ---
 const App = () => {
-    const [view, setView] = useState('lobby'); // 'lobby' || 'waiting' || 'revealrole' ||'in-progress' ||'vote' || 'loading'
+    const [view, setView] = useState('lobby'); // 'lobby' || 'waiting' || 'in-progress' ||'in-progress' ||'vote' || 'loading'
     const [theme, setTheme] = useState('dark');
     const [loadingMessage, setLoadingMessage] = useState('');
     const [toasts, setToasts] = useState([]); // Array of { id, message, variant }
@@ -31,7 +32,7 @@ const App = () => {
     const [countdown, setCountdown] = useState("");
     const [isGameRunning, setIsGameRunning] = useState(false);
     const [isCodeCopied, setIsCodeCopied] = useState(false);
-
+    const [modalRevealRole, setModalRevealRole] = useState(false);
 
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [locationsArr, setLocationsArr] = useState([]);
@@ -301,8 +302,9 @@ const App = () => {
                 case 'roleAssigned':
                     setRole(data.role);
                     setLocation(data.location);
-                    setView('revealrole');
+                    setView('in-progress');
                     showToast("Your role has been assigned.", "info");
+                    setModalRevealRole(true);
                     break;
                 case 'voteCalled':
                     setView('vote');
@@ -441,15 +443,12 @@ const App = () => {
                             </div>
                         </PlayerContext.Provider>
                     </div>);
-            case 'revealrole':
-                return (
-                    <div className="grid grid-cols-1 gap-6 w-fit h-fit p-4 mt-4 mx-auto">
-                        <RevealRoleCard location={location} role={role} onContinue={()=>{ setView("in-progress") }} />
-                    </div>);
             case 'in-progress':
                 return (
                     <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
                         <PlayerContext.Provider value={{roomCode, playerName, playerCode}}>
+                            {modalRevealRole && createPortal( <RevealRoleCard location={location} role={role} onContinue={() => setModalRevealRole(false)} />
+                                , document.body )}
                             
                                 {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
                             <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6 mt-6">
@@ -502,11 +501,13 @@ const App = () => {
                 <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("lobby") }}
                     > lobby view
                 </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("revealrole"); setRole("Ice cream vendor"); setLocation("Space station over antarctica"); }}>
-                     reveal role view
+                <button className="rounded-l border-1 border-black p-2" onClick={() => { setModalRevealRole(true); 
+                    setRole("Ice cream vendor"); setLocation("Space station over antarctica");
+                  }}>
+                    reveal role modal
                 </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("loading"); setLoadingMessage("test message..."); }}
-                    > loading view
+                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("loading"); setLoadingMessage("test message..."); }}>
+                    loading view
                 </button>
                 <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('This is an info toast!', 'info')}>
                     Info Toast
