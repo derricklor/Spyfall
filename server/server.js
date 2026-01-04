@@ -177,7 +177,7 @@ async function finalVote(roomCode) {
             //if eliminated player is spy, they get one guess to pick location
             if (eliminatedPlayer.role === 'Spy') {
                 endDate = new Date(Date.now() + 0.5 * 60 * 1000); // 30 seconds from now
-                io.to(roomCode).emit('message', { type: 'announcement', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.', endDate: endDate });
+                io.to(roomCode).emit('message', { type: 'voteEnded', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.', endDate: endDate });
                 //set timeout for spy to guess location in 30 seconds
                 clearTimeout(updatedRoom.voteTimeoutID); //clear previous timeout and set new one
                 clearTimeout(updatedRoom.gameTimeoutID); // also clear game timeout
@@ -320,7 +320,7 @@ io.on('connection', (socket) => {
     
         //anyone in room can call for a vote once game is in progress
         if (room.gameState !== 'in-progress') {
-            callback({ status: 'error', message: 'Game is not in progress.' });
+            callback({ status: 'error', message: 'Cannot call vote at this time.' });
             return;
         }
         //if already in voting state, cannot call another vote
@@ -348,7 +348,7 @@ io.on('connection', (socket) => {
         let endDate = new Date(Date.now() + 0.5 * 60 * 1000); // 30 seconds from now
         // notify all players in room that a vote has been called
         io.to(roomCode).emit('message', { type: 'voteCalled', message: `${player.name} has called for a vote.`, endDate: endDate  });
-        callback({ status: 'success', message: 'Vote called successfully.', endDate: endDate });
+        callback({ status: 'success'});
         
         //start timeout to end voting after 30 seconds
         room.voteTimeoutID = setTimeout(async () => {
@@ -363,7 +363,7 @@ io.on('connection', (socket) => {
                 //if eliminated player is spy, they get one guess to pick location
                 if (eliminatedPlayer.role === 'Spy') {
                     endDate = new Date(Date.now() + 0.5 * 60 * 1000); // 30 seconds from now
-                    io.to(roomCode).emit('message', { type: 'announcement', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.', endDate: endDate });
+                    io.to(roomCode).emit('message', { type: 'voteEnded', message: 'You have correctly guessed the Spy! The Spy has 30 seconds to guess one location to steal the win.', endDate: endDate });
                     //set timeout for spy to guess location in 30 seconds
                     clearTimeout(updatedRoom.voteTimeoutID); //clear previous timeout and set new one
                     clearTimeout(updatedRoom.gameTimeoutID); // also clear game timeout

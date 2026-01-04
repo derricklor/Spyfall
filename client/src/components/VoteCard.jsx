@@ -56,7 +56,7 @@ const VoteCard = ({ playerList, onVote, voteEndDate }) => {
                 onClick={()=> onVote(playerContextObject.roomCode, playerContextObject.playerCode, voteForID)}
                     disabled={voteForID === null}
                     >
-                    submit vote
+                    Submit Vote
                 </button>
             </div>
         </Card>

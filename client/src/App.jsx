@@ -188,8 +188,8 @@ const App = () => {
                 setRoomChat(prev => [...prev, "Error submitting vote. " + response.message]);
                 showToast("Error submitting vote: " + response.message, "error");
             } else { // else success
-                setRoomChat(prev => [...prev, "Your vote has been cast"]);
-                showToast("Your vote has been cast.", "success");
+                //setRoomChat(prev => [...prev, "Your vote has been submitted."]);
+                showToast("Your vote has been submitted.", "success");
             }
         });
     };
@@ -206,9 +206,9 @@ const App = () => {
                 showToast("Error calling vote: " + response.message, "error");
             } else { // else success
                 setView('vote');
-                setRoomChat(prev => [...prev, response.message]);
-                showToast("Vote initiated!", "info");
-                setVoteEndDate(new Date(response.endDate));
+                //setRoomChat(prev => [...prev, response.message]);
+                //showToast("Vote initiated!", "info");
+                //setVoteEndDate(new Date(response.endDate));
             }
         });
     };
@@ -308,6 +308,9 @@ const App = () => {
                     break;
                 case 'voteEnded':
                     setView('in-progress');
+                    if (data.endDate) {
+                        setGameEndDate(new Date(data.endDate));
+                    }
                     setRoomChat(prev => [...prev, data.message]);
                     showToast("The vote has ended.", "warning");
                     break;
@@ -463,7 +466,7 @@ const App = () => {
                                     py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
                                     Leave Room
                                 </button>
-                                {isGameRunning && <div className="text-2xl font-bold">{countdown}</div>}
+                                {isGameRunning && <div className="flex justify-center text-2xl font-bold ">Final Vote In {countdown}</div>}
                                 <PlayerCard location={location} role={role}/>
                                 <ActionsCard playerList={playerList} view={view} onCallVote={callVote} onEndGame={endGame}/>
                             </div>
