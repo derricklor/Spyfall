@@ -306,6 +306,11 @@ const App = () => {
                     showToast("Your role has been assigned.", "info");
                     setModalRevealRole(true);
                     break;
+                case 'voteEnded':
+                    setView('in-progress');
+                    setRoomChat(prev => [...prev, data.message]);
+                    showToast("The vote has ended.", "warning");
+                    break;
                 case 'voteCalled':
                     setView('vote');
                     setRoomChat(prev => [...prev, data.message]);
