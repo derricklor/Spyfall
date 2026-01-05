@@ -11,6 +11,7 @@ import RoomChatCard from './components/RoomChatCard';
 import VoteCard from './components/VoteCard';
 import LocationsCard from './components/LocationsCard';
 import RevealRoleCard from './components/RevealRoleCard';
+import SpyGuessCard from './components/SpyGuessCard';
 import LoadingCard from './components/LoadingCard';
 import Toast from './components/Toast';
 
@@ -33,6 +34,7 @@ const App = () => {
     const [isGameRunning, setIsGameRunning] = useState(false);
     const [isCodeCopied, setIsCodeCopied] = useState(false);
     const [modalRevealRole, setModalRevealRole] = useState(false);
+    const [modalSpyGuess, setModalSpyGuess] = useState(false);
 
     const [roomChat, setRoomChat] = useState(["Welcome to the room!"]);
     const [locationsArr, setLocationsArr] = useState([]);
@@ -213,8 +215,8 @@ const App = () => {
         });
     };
 
-    const spyGuessLocation = (roomCode, playerCode, guessedLocation) => {
-        socket.timeout(TIMEOUT_MS).emit("spyGuessLocation", { roomCode, playerCode, guessedLocation }, (err, response) => {
+    const spyGuessLocation = (roomCode, playerCode, guessedLocationID) => {
+        socket.timeout(TIMEOUT_MS).emit("spyGuessLocation", { roomCode, playerCode, guessedLocationID }, (err, response) => {
             if (err) {
                 console.error("Socket timeout submitting location guess. Server did not respond in time.");
                 setRoomChat(prev => [...prev, "Error: Could not submit location guess. The server did not respond."]);
@@ -239,7 +241,7 @@ const App = () => {
                 console.error("Error fetching locations.");
                 showToast("Error fetching locations. Please try again.", "error");
             } else { // else success
-                setLocationsArr(response.locations); //array of objs
+                setLocationsArr(response.locations); //array of location objects { _id, name}
             }
         });
     };
@@ -454,8 +456,10 @@ const App = () => {
             case 'in-progress':
                 return (
                     <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
-                        <PlayerContext.Provider value={{roomCode, playerName, playerCode}}>
+                        <PlayerContext.Provider value={{roomCode, playerName, playerCode, role}}>
                             {modalRevealRole && createPortal( <RevealRoleCard location={location} role={role} onContinue={() => setModalRevealRole(false)} />
+                                , document.body )}
+                            {modalSpyGuess && createPortal( <SpyGuessCard locationsArr={locationsArr} onSpyGuessLocation={spyGuessLocation} onClose={() => setGuessLocationModal(false)} />
                                 , document.body )}
                             
                                 {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
@@ -467,7 +471,7 @@ const App = () => {
                                     Leave Room
                                 </button>
                                 {isGameRunning && <div className="flex justify-center text-2xl font-bold ">Final Vote In {countdown}</div>}
-                                <PlayerCard location={location} role={role}/>
+                                <PlayerCard location={location} role={role} setModalSpyGuess={setModalSpyGuess}/>
                                 <ActionsCard playerList={playerList} view={view} onCallVote={callVote} onEndGame={endGame}/>
                             </div>
 
@@ -483,14 +487,18 @@ const App = () => {
                         </PlayerContext.Provider>
                     </div>);
             case 'vote':
-                // todo: make chat card visible, show player card, fix vote selection
                 return (
-                    <div className="grid lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
-                        <PlayerContext.Provider value={{roomCode, playerName, playerCode}}>
-                            <div className="col-span-1 lg:col-start-1 lg:col-span-2 xl:col-start-2 xl:col-span-2 space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 p-8 mt-4 lg:mx-auto">
+                        <PlayerContext.Provider value={{roomCode, playerName, playerCode, role}}>
+                            {modalSpyGuess && createPortal( <SpyGuessCard locationsArr={locationsArr} onSpyGuessLocation={spyGuessLocation} onClose={() => setGuessLocationModal(false)} />
+                                , document.body )}
+                            <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6 mt-6">
+                                <PlayerCard location={location} role={role} setModalSpyGuess={setModalSpyGuess} />
+                            </div>
+                            <div className="col-span-1 lg:col-start-2 lg:col-span-2 xl:col-start-3 xl:col-span-2 space-y-6">
                                 <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
                             </div>
-                            <div className="col-span-1 lg:col-start-3 xl:col-start-4 space-y-6">
+                            <div className="col-span-1 lg:row-start-2 lg:col-start-1 lg:col-span-3 xl:col-start-3 xl:col-span-2 space-y-6">
                                 <VoteCard playerList={playerList} onVote={vote} voteEndDate={voteEndDate} />
                             </div>
                         </PlayerContext.Provider>

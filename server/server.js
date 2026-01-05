@@ -299,7 +299,7 @@ io.on('connection', (socket) => {
 
     //handle get locations emit from client
     socket.on('getLocations', withErrorHandling(async (callback) => {
-        const locations = await Location.find({}, { name: 1}); //get only names of locations
+        const locations = await Location.find({}, { name: 1, _id: 1 }); //get names and IDs of locations
         callback({ status: 'success', locations: locations }); //send locations array to client
     }));
 
@@ -577,7 +577,7 @@ io.on('connection', (socket) => {
 
     
     // receive spy guess location
-    socket.on('spyGuessLocation', withErrorHandling(async ({roomCode, playerCode, guessedLocation}, callback) => {
+    socket.on('spyGuessLocation', withErrorHandling(async ({roomCode, playerCode, guessedLocationID}, callback) => {
         const { room, player } = await getRoomAndPlayer(roomCode, playerCode, socket.id);
         //check player is the spy
         if (player.role !== 'Spy') {
@@ -592,7 +592,7 @@ io.on('connection', (socket) => {
         callback({ status: 'success'});
         const spyNames = getSpyNames(room);
         //check guessedLocation is valid
-        room.location !== guessedLocation ?
+        room.location !== guessedLocationID ?
         io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy has guessed incorrectly. Non-Spies win! The Spy was ${spyNames}. The location was ${room.location.name}.` })
         :
         io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy has guessed correctly. Spies win! The Spy was ${spyNames}. The location was ${room.location.name}.` });
