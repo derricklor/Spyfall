@@ -168,12 +168,12 @@ async function finalVote(roomCode) {
     room.voteTimeoutID = setTimeout(async () => {
         //after timeout, get latest updated room
         const updatedRoom = await Room.findOne({ roomCode });
-        
+        const spyNames = getSpyNames(updatedRoom);
         const eliminatedPlayerID = checkVotes(updatedRoom);
         if (eliminatedPlayerID) {
             const eliminatedPlayer = updatedRoom.players.find(p => p.playerCode === eliminatedPlayerID);
             io.to(roomCode).emit('message', { type: 'announcement', message: `${eliminatedPlayer.name} has been voted as the Spy.` });
-            const spyNames = getSpyNames(updatedRoom);
+            
             //if eliminated player is spy, they get one guess to pick location
             if (eliminatedPlayer.role === 'Spy') {
                 endDate = new Date(Date.now() + 0.5 * 60 * 1000); // 30 seconds from now
@@ -485,8 +485,8 @@ io.on('connection', (socket) => {
         }
         await resetRoom(room);
         callback({ status: 'success'});
-        // broadcast to everyone in room except sender
-        socket.broadcast.to(roomCode).emit('message', { type: 'resetRoom', message: 'The host has ended the game.' });
+        // broadcast to everyone in room including sender
+        io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The host has ended the game.' });
 
     }));
 
@@ -508,6 +508,8 @@ io.on('connection', (socket) => {
             callback({ status: 'error', message: 'Only the host can start the game.' });
             return;
         } else {
+            // notify all players game has started
+            callback({ status: 'success'});
             // assign roles to players based on location
             // if no location assigned yet, pick a random location
             if (!room.location) {
@@ -538,8 +540,7 @@ io.on('connection', (socket) => {
             // calculate date time when game will end
             const timerMilliseconds = room.gameLength * 60 * 1000;// convert minutes to milliseconds
             const endDate = new Date(Date.now() + timerMilliseconds);
-            // notify all players game has started
-            callback({ status: 'success'});
+            
             io.to(roomCode).emit('message', { type: 'gameStarted', message: 'Game has started.', endDate: endDate}); 
             //for each player, emit their role privately
             room.players.forEach(p => {

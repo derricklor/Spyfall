@@ -44,8 +44,8 @@ const App = () => {
     const [playerCode, setPlayerCode] = useState('');
     const [roomCode, setRoomCode] = useState('');
 
-    const [role, setRole] = useState(''); // player's role
-    const [location, setLocation] = useState(''); // player's location
+    const [role, setRole] = useState(null); // player's role
+    const [location, setLocation] = useState(null); // player's location
     const playerNameRef = useRef(playerName);
 
     const showToast = (message, variant = 'info') => {
@@ -149,17 +149,12 @@ const App = () => {
                 setRoomChat(prev => [...prev, "Error ending game. " + response.message]);
                 showToast("Error ending game: " + response.message, "error");
             } else { // else success
-                setView('waiting');
-                setRoomChat(prev => [...prev, "The host has ended the game."]);
-                showToast("Game ended by host.", "info");
-                setIsGameRunning(false);
+                //let resetRoom handle resetting view and other info
             }
         });
     };
 
     const startGame = (roomCode, playerCode) => {
-        setView('loading');
-        setLoadingMessage("Starting game...");
         socket.timeout(TIMEOUT_MS).emit("startGame", { roomCode, playerCode }, (err, response) =>{
             if (err) {
                 console.error("Socket timeout starting game. Server did not respond in time.");
@@ -173,8 +168,8 @@ const App = () => {
                 setView('waiting');
             } else { // else success
                 //wait for gameStarted event from server to update view and other info
-                setRoomChat(prev => [...prev, "Game is starting..."]);
-                showToast("Game is starting!", "success");
+                // setRoomChat(prev => [...prev, "Game is starting..."]);
+                // showToast("Game is starting!", "success");
             }
         });
     };
@@ -312,6 +307,7 @@ const App = () => {
                     setView('in-progress');
                     if (data.endDate) {
                         setGameEndDate(new Date(data.endDate));
+                        setIsGameRunning(true);
                     }
                     setRoomChat(prev => [...prev, data.message]);
                     showToast("The vote has ended.", "warning");
@@ -325,8 +321,8 @@ const App = () => {
                 case 'resetRoom':
                     setView('waiting');
                     setRoomChat(prev => [...prev, data.message]);
-                    setRole('');
-                    setLocation('');
+                    setRole(null);
+                    setLocation(null);
                     showToast("Room has been reset.", "info");
                     setIsGameRunning(false);
                     break;
@@ -459,7 +455,7 @@ const App = () => {
                         <PlayerContext.Provider value={{roomCode, playerName, playerCode, role}}>
                             {modalRevealRole && createPortal( <RevealRoleCard location={location} role={role} onContinue={() => setModalRevealRole(false)} />
                                 , document.body )}
-                            {modalSpyGuess && createPortal( <SpyGuessCard locationsArr={locationsArr} onSpyGuessLocation={spyGuessLocation} onClose={() => setGuessLocationModal(false)} />
+                            {modalSpyGuess && createPortal( <SpyGuessCard locationsArr={locationsArr} serverURL={URL} onSpyGuessLocation={spyGuessLocation} onClose={() => setGuessLocationModal(false)} />
                                 , document.body )}
                             
                                 {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
@@ -470,7 +466,7 @@ const App = () => {
                                     py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md">
                                     Leave Room
                                 </button>
-                                {isGameRunning && <div className="flex justify-center text-2xl font-bold ">Final Vote In {countdown}</div>}
+                                {isGameRunning && <div className="flex justify-center text-2xl font-bold ">Time {countdown}</div>}
                                 <PlayerCard location={location} role={role} setModalSpyGuess={setModalSpyGuess}/>
                                 <ActionsCard playerList={playerList} view={view} onCallVote={callVote} onEndGame={endGame}/>
                             </div>
@@ -558,7 +554,7 @@ const App = () => {
                 ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
             `}</style>
 
-            <main className="w-full h-[calc(100vh-64px)] flex flex-col">
+            <main className="w-full h-full flex flex-col">
                 {renderView()}
             </main>
             <div className="fixed bottom-20 right-8 z-50">

@@ -41,7 +41,7 @@ const roomSchema = new mongoose.Schema({
     },
     gameLength: {
         type: Number,
-        default: 1, // default game length in minutes
+        default: 8, // default game length in minutes
         min: 1,
         max: 59
     },

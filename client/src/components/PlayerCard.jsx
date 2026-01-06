@@ -9,9 +9,9 @@ const PlayerCard = ({ location, role, setModalSpyGuess }) => {
     return (
         <Card className="p-6 h-fit flex flex-col space-y-4 transition duration-500 items-center justify-center text-center">
             <span className="text-[var(--dark)]/50 dark:text-[var(--light)]/50">Hover or Click to Reveal</span>
-            <div className="grid grid-cols-1 relative cursor-pointer"
+            <div className="grid grid-cols-1 relative cursor-pointer z-1"
                 onMouseEnter={() => setIsRoleRevealed(true)}
-                onMouseLeave={() => setTimeout(() => setIsRoleRevealed(false), 3000)}
+                onMouseLeave={() => {setIsRoleRevealed(false)}}
                 onClick={() => setIsRoleRevealed(!isRoleRevealed)}
             >
                 
@@ -23,11 +23,11 @@ const PlayerCard = ({ location, role, setModalSpyGuess }) => {
                     </div>
                 </div>
 
-                <div className={`transition-all duration-300 ${isRoleRevealed ? 'opacity-100' : 'opacity-0 hidden'}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                <div className={`transition-all duration-300 ${isRoleRevealed ? 'opacity-100' : 'opacity-0'}`}>
+                    {/* <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    </svg>
+                    </svg> */}
                     <div className="grid grid-cols-2 items-center justify-center">
 
                         <span className="col-span-1 text-xl font-light text-[var(--dark)] dark:text-[var(--light)]">Your role is: </span>
@@ -40,7 +40,7 @@ const PlayerCard = ({ location, role, setModalSpyGuess }) => {
                         </span>
                         {isSpy && 
                             <button className="flex items-center gap-2 bg-[var(--warning)] dark:bg-[var(--warning-dark)] hover:bg-[var(--warning-dark)] dark:hover:bg-yellow-600 text-black 
-                                py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md mt-4"
+                                py-2 px-4 mx-auto rounded-lg font-medium transition duration-200 shadow-md mt-4 z-2"
                                 onClick={()=> setModalSpyGuess(true)}>
                                 Guess the Location
                             </button>}
