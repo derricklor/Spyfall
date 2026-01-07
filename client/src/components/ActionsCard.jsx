@@ -35,7 +35,8 @@ const ActionsCard = ({ playerList, view, onStartGame, onCallVote, onEndGame }) =
                         <button className={`text-[var(--dark)] rounded-lg p-2 transition duration-200 shadow-md
                             ${playerList.length < 3 
                             ? 'bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] cursor-not-allowed hover:scale-95' 
-                            : 'bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105'}`} onClick={()=> onStartGame(playerContextObj.roomCode, playerContextObj.playerCode)} disabled={playerList.length < 3}>
+                            : 'bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105'}`} onClick={()=> onStartGame(playerContextObj.roomCode, playerContextObj.playerCode)} 
+                            disabled={playerList.length < 3}>
                             Start Game
                         </button>
                     </div>

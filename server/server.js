@@ -286,14 +286,7 @@ io.on('connection', (socket) => {
         if (!player) {
             throw new Error(`Player with code ${pCode} not found in room ${roomCodeUpper}.`);
         }
-        // room and player found, but socketID may have changed, update it
-        if (player.socketID !== psocketID) {
-            player.socketID = psocketID;
-            await Room.updateOne({ roomCode, 'players.playerCode': pCode }, { $set: { 'players.$.socketID': psocketID } });
-            //get updated room and player
-            room = await Room.findOne({ roomCode });
-            player = room.players.find(p => p.playerCode === pCode);
-        }
+        // room and player found
         return { room, player };
     }
 
@@ -508,8 +501,6 @@ io.on('connection', (socket) => {
             callback({ status: 'error', message: 'Only the host can start the game.' });
             return;
         } else {
-            // notify all players game has started
-            callback({ status: 'success'});
             // assign roles to players based on location
             // if no location assigned yet, pick a random location
             if (!room.location) {
@@ -540,7 +531,8 @@ io.on('connection', (socket) => {
             // calculate date time when game will end
             const timerMilliseconds = room.gameLength * 60 * 1000;// convert minutes to milliseconds
             const endDate = new Date(Date.now() + timerMilliseconds);
-            
+            // notify all players game has started
+            callback({ status: 'success'});
             io.to(roomCode).emit('message', { type: 'gameStarted', message: 'Game has started.', endDate: endDate}); 
             //for each player, emit their role privately
             room.players.forEach(p => {
@@ -600,6 +592,17 @@ io.on('connection', (socket) => {
         // fall through to reset game
         await resetRoom(room);
         io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
+    }));
+
+
+    socket.on('playerReconnected', withErrorHandling(async ({ playerCode }) => {
+        if (playerCode) {
+            const room = await Room.findOne({ 'players.playerCode': playerCode });
+            if (room) {
+                await Room.updateOne({ roomCode: room.roomCode, 'players.playerCode': playerCode }, { $set: { 'players.$.socketID': socket.id } });
+                serverLog(`Player ${playerCode} reconnected with new socket ID: ${socket.id}`);
+            }
+        }
     }));
 
     //player voluntarily leaves room

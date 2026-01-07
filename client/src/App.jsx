@@ -23,7 +23,7 @@ const TIMEOUT_MS = 5000;
 
 // --- Main App Component ---
 const App = () => {
-    const [view, setView] = useState('lobby'); // 'lobby' || 'waiting' || 'in-progress' ||'in-progress' ||'vote' || 'loading'
+    const [view, setView] = useState('lobby'); // 'lobby' || 'waiting' || 'in-progress' ||'vote' || 'loading'
     const [theme, setTheme] = useState('dark');
     const [loadingMessage, setLoadingMessage] = useState('');
     const [toasts, setToasts] = useState([]); // Array of { id, message, variant }
@@ -134,7 +134,6 @@ const App = () => {
                 setView('lobby');
                 setRoomChat(["Welcome to the room!"]);
                 showToast("Left room successfully.", "info");
-                console.log(response.message);
             }
         });
     }
@@ -149,7 +148,7 @@ const App = () => {
                 setRoomChat(prev => [...prev, "Error ending game. " + response.message]);
                 showToast("Error ending game: " + response.message, "error");
             } else { // else success
-                //let resetRoom handle resetting view and other info
+                //let resetRoom message from server reset view and other info
             }
         });
     };
@@ -167,9 +166,7 @@ const App = () => {
                 showToast("Error starting game: " + response.message, "error");
                 setView('waiting');
             } else { // else success
-                //wait for gameStarted event from server to update view and other info
-                // setRoomChat(prev => [...prev, "Game is starting..."]);
-                // showToast("Game is starting!", "success");
+                //wait for gameStarted message from server to update view and other info
             }
         });
     };
@@ -278,6 +275,12 @@ const App = () => {
 
     //on first mount, setup socket event listeners
     useEffect(() => {
+        socket.on('reconnect', () => {
+            if (playerCode) {
+                socket.emit('playerReconnected', { playerCode });
+            }
+        });
+
         socket.on('message', (data) => {
             switch (data.type) {
                 case 'error':
@@ -289,8 +292,8 @@ const App = () => {
                     //showToast(data.message, "info");
                     break;
                 case 'gameStarted':
-                    setView('loading');
-                    setLoadingMessage("Assigning roles...");
+                    // setView('loading');
+                    // setLoadingMessage("Assigning roles...");
                     setRoomChat(prev => [...prev, data.message]);
                     showToast("Game has started!", "success");
                     setGameEndDate(new Date(data.endDate));
