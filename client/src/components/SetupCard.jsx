@@ -131,7 +131,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
 
             <div className="flex gap-2">
                 <button onClick={() => onCreateRoom(playerContextObj.playerName)} // anonymous function to pass name value
-                    className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-200 shadow-md 
+                    className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-500 shadow-md 
                         ${btnStyle}`}
                         disabled={!playerContextObj.playerName}>
                     Create Room
@@ -140,7 +140,7 @@ const SetupCard = ({ onCreateRoom, onJoinRoom }) => {
                     </svg>
                 </button>
                 <button onClick={() => { onJoinRoom(playerContextObj.roomCode, playerContextObj.playerName); }} // anonymous function to pass name and code values
-                    className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-200 shadow-md 
+                    className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-500 shadow-md 
                         ${btnStyle}`}
                         disabled={playerContextObj.roomCode.length !== 4 || !playerContextObj.playerName}>
                     Join Room

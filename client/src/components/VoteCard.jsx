@@ -41,7 +41,7 @@ const VoteCard = ({ playerList, onVote, voteEndDate }) => {
                         disabled={playerContextObject.playerCode === player.playerID} // disable voting for self
                         onClick={() => setVotedForID(player.playerID)}
                         className={`w-full py-3 rounded-lg text-lg font-medium text-[var(--dark)] dark:text-[var(--light)] 
-                            transition duration-200 bg-[var(--primary)] hover:bg-cyan-500 dark:bg-cyan-500 dark:hover:bg-cyan-600 hover:cursor-pointer
+                            transition duration-500 bg-[var(--primary)] hover:bg-cyan-500 dark:bg-cyan-500 dark:hover:bg-cyan-600 hover:cursor-pointer
                             disabled:bg-[var(--light)] disabled:dark:bg-[var(--secondary-dark)] disabled:border disabled:border-[var(--secondary)] disabled:cursor-not-allowed
                             ${voteForID === player.playerID ? 'ring-4 ring-[var(--primary)]' : ''} `}
                     >
@@ -51,7 +51,7 @@ const VoteCard = ({ playerList, onVote, voteEndDate }) => {
                 ))}
             </div>
             <div className="">
-                <button className="flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-200 shadow-md bg-[var(--primary)] dark:bg-cyan-500 text-[var(--dark)] dark:text-[var(--light)] hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:cursor-pointer hover:scale-105
+                <button className="flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-500 shadow-md bg-[var(--primary)] dark:bg-cyan-500 text-[var(--dark)] dark:text-[var(--light)] hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:cursor-pointer hover:scale-105
                 disabled:bg-[var(--light)] disabled:dark:bg-[var(--secondary-dark)] disabled:border disabled:border-[var(--secondary)] disabled:cursor-not-allowed disabled:hover:scale-95"
                 onClick={()=> onVote(playerContextObject.roomCode, playerContextObject.playerCode, voteForID)}
                     disabled={voteForID === null}

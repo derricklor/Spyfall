@@ -32,7 +32,7 @@ const ActionsCard = ({ playerList, view, onStartGame, onCallVote, onEndGame }) =
                 {isHost && (view === 'waiting') ? ( // render if host and viewing waiting room
                     <div className="flex flex-col items-center space-y-4">
                         <span className="text-sm text-[var(--secondary-dark)] dark:text-[var(--secondary)]">You are the host. You can start the game when there are at least 3 players.</span>
-                        <button className={`text-[var(--dark)] rounded-lg p-2 transition duration-200 shadow-md
+                        <button className={`text-[var(--dark)] rounded-lg p-2 transition duration-500 shadow-md
                             ${playerList.length < 3 
                             ? 'bg-[var(--light)] dark:bg-[var(--secondary-dark)] border border-[var(--secondary)] cursor-not-allowed hover:scale-95' 
                             : 'bg-[var(--primary)] hover:brightness-80 hover:cursor-pointer hover:scale-105'}`} onClick={()=> onStartGame(playerContextObj.roomCode, playerContextObj.playerCode)} 
@@ -47,7 +47,7 @@ const ActionsCard = ({ playerList, view, onStartGame, onCallVote, onEndGame }) =
 
                 {isHost && (view ==='in-progress') ? ( // render end game button if host and room is in-progress
                     <div>
-                        <button className="text-[var(--dark)] rounded-lg p-2 transition duration-200 shadow-md bg-[var(--danger)] hover:brightness-80 hover:cursor-pointer hover:scale-105"
+                        <button className="text-[var(--dark)] rounded-lg p-2 transition duration-500 shadow-md bg-[var(--danger)] hover:brightness-80 hover:cursor-pointer hover:scale-105"
                             onClick={()=> onEndGame(playerContextObj.roomCode, playerContextObj.playerCode)}>
                             End Game
                         </button>
@@ -56,7 +56,7 @@ const ActionsCard = ({ playerList, view, onStartGame, onCallVote, onEndGame }) =
 
                 {view === 'in-progress' ? ( // render call vote button if room is in-progress
                     <div>
-                        <button className="text-[var(--dark)] rounded-lg p-2 transition duration-200 shadow-md bg-[var(--danger)] hover:brightness-80 hover:cursor-pointer hover:scale-105"
+                        <button className="text-[var(--dark)] rounded-lg p-2 transition duration-500 shadow-md bg-[var(--danger)] hover:brightness-80 hover:cursor-pointer hover:scale-105"
                             onClick={()=> onCallVote(playerContextObj.roomCode, playerContextObj.playerCode)}>
                             Call Vote
                         </button>

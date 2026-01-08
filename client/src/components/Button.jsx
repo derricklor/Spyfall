@@ -13,7 +13,7 @@ const Button = ({children, onClick, variant, className, disabled}) => {
     }
 
     return (
-        <button className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-200 shadow-md 
+        <button className={`flex items-center justify-center gap-2 space-x-2 py-2 px-4 rounded-3xl transition duration-500 shadow-md 
             bg-[var(--${variant})] dark:bg-[var(--${variant}-darker)] text-[var(--dark)] dark:text-[var(--light)] hover:cursor-pointer ${className}`} 
             disabled={disabled} onClick={()=>onClick}
             >
