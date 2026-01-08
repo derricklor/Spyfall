@@ -585,10 +585,16 @@ io.on('connection', (socket) => {
         callback({ status: 'success'});
         const spyNames = getSpyNames(room);
         //check guessedLocation is valid
-        room.location !== guessedLocationID ?
-        io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy has guessed incorrectly. Non-Spies win! The Spy was ${spyNames}. The location was ${room.location.name}.` })
-        :
-        io.to(roomCode).emit('message', { type: 'announcement', message: `The Spy has guessed correctly. Spies win! The Spy was ${spyNames}. The location was ${room.location.name}.` });
+        const guessLocation = await Location.findById(guessedLocationID);
+        const location = await Location.findById(room.location);
+        let msg = ``;
+        if (location._id.toString() == guessLocation._id.toString()) { // not strict equality, different object references
+            msg += `Spies win! `;
+        } else {
+            msg += `Non-Spies win! `;
+        }
+        msg += `The Spy has guessed ${guessLocation.name}. The location was ${location.name}. The Spy was ${spyNames}.`;
+        io.to(roomCode).emit('message', { type: 'announcement', message: msg });
         // fall through to reset game
         await resetRoom(room);
         io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
