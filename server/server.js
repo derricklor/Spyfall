@@ -15,7 +15,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
     connectionStateRecovery: {
         maxDisconnectionDuration: 2 * 60 * 1000,// the backup duration of the sessions and the packets
-        skipMiddlewares: true  // whether to skip middlewares upon successful recovery
+        skipMiddlewares: true,  // whether to skip middlewares upon successful recovery
     },
     cors: {     //enable CORS during development
         origin: 'http://localhost:5173'
@@ -607,16 +607,8 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('message', { type: 'resetRoom', message: 'The game has finished.' });
     }));
 
-
-    socket.on('playerReconnected', withErrorHandling(async ({ playerCode }) => {
-        if (playerCode) {
-            const room = await Room.findOne({ 'players.playerCode': playerCode });
-            if (room) {
-                await Room.updateOne({ roomCode: room.roomCode, 'players.playerCode': playerCode }, { $set: { 'players.$.socketID': socket.id } });
-                serverLog(`Player ${playerCode} reconnected with new socket ID: ${socket.id}`);
-            }
-        }
-    }));
+    
+    
 
     //player voluntarily leaves room
     socket.on('leaveRoom', withErrorHandling(async ({roomCode, playerCode}, callback) => {
