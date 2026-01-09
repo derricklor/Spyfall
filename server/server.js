@@ -13,10 +13,13 @@ const initLocations = require('./initLocations');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    connectionStateRecovery: {},
-    cors: {
-        origin: 'http://localhost:5173',
-        methods: ['GET', 'POST'],
+    connectionStateRecovery: {
+        maxDisconnectionDuration: 2 * 60 * 1000,// the backup duration of the sessions and the packets
+        skipMiddlewares: true  // whether to skip middlewares upon successful recovery
+    },
+    cors: {     //enable CORS during development
+        origin: 'http://localhost:5173'
+        // methods: ['GET', 'POST'],
     },
 });
 
@@ -258,7 +261,11 @@ async function resetRoom(room) {
 }
 
 io.on('connection', (socket) => {
-    serverLog(`A user connected: ${socket.id}`);
+    if ( socket.recovered ) {
+        serverLog(`A user reconnected: ${socket.id}`);
+    } else {
+        serverLog(`A user connected: ${socket.id}`);
+    }
     
     function withErrorHandling(handler) {
         return async (...args) => {
@@ -621,8 +628,8 @@ io.on('connection', (socket) => {
     }));
 
     //player disconnects, treat as leaving room
-    socket.on('disconnect', withErrorHandling(async () => {
-        serverLog(`A user disconnected: ${socket.id}`);
+    socket.on('disconnect', withErrorHandling(async (reason) => {
+        serverLog(`A user disconnected: ${socket.id} due to ${reason}`);
         //find room of player by socket id
         let room = await Room.findOne({ 'players.socketID': socket.id });
         //remove player from room they were in

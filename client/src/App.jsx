@@ -275,10 +275,28 @@ const App = () => {
 
     //on first mount, setup socket event listeners
     useEffect(() => {
-        socket.on('reconnect', () => {
-            if (playerCode) {
-                socket.emit('playerReconnected', { playerCode });
+        socket.on("connect", () => {
+            if ( socket.recovered ) {
+                showToast("Reconnected to server.", "info");
+            } else {
+                showToast("Connected to server.", "success");
             }
+            // trigger reconnection logic if needed
+            // setTimeout(() => {
+            // // close the low-level connection and trigger a reconnection
+            //     socket.io.engine.close();
+            // }, Math.random() * 5000 + 1000);
+        });
+
+        socket.on('reconnect', () => {
+            showToast("Reconnected to server.", "info");
+            // if (playerCode) {
+            //     socket.emit('playerReconnected', { playerCode });
+            // }
+        });
+
+        socket.on("disconnect", () => {
+            showToast("Disconnected from server.", "error");
         });
 
         socket.on('message', (data) => {
@@ -353,6 +371,9 @@ const App = () => {
 
         return () => {
             // Cleanup event listeners on unmount
+            socket.off('connect');
+            socket.off('reconnect');
+            socket.off('disconnect');
             socket.off('message');
         };
     }, []);
