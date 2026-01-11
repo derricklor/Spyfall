@@ -39,8 +39,8 @@ const PlayerCard = ({ location, role, setModalSpyGuess }) => {
                             {isSpy ? "???" : location}
                         </span>
                         {isSpy && 
-                            <button className="flex items-center gap-2 bg-[var(--warning)] dark:bg-[var(--warning-dark)] hover:bg-[var(--warning-dark)] dark:hover:bg-yellow-600 text-black 
-                                py-2 px-4 mx-auto rounded-lg font-medium transition duration-500 shadow-md mt-4 z-2"
+                            <button className={`flex items-center gap-2 bg-[var(--warning)] hover:brightness-80 hover:cursor-pointer hover:scale-105 text-black 
+                                py-2 px-4 mx-auto rounded-lg font-medium transition duration-500 shadow-md mt-4 z-2 col-span-2 ${isRoleRevealed ? '' : 'hidden'}`}
                                 onClick={()=> setModalSpyGuess(true)}>
                                 Guess the Location
                             </button>}

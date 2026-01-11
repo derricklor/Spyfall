@@ -34,15 +34,14 @@ const VoteCard = ({ playerList, onVote, voteEndDate }) => {
     return (
         <Card title="Vote for a Spy" className="p-6 mt-6 h-full flex flex-col space-y-4 transition duration-500">
             <div className="text-2xl font-bold text-center">{countdown}</div>
-            <div className="space-y-4 pt-4 pb-8 border-b border-[var(--dark)] dark:border-[var(--dark)]">
+            <div className="space-y-4 pt-4 pb-8 border-b border-[var(--secondary)]">
                 {playerList.map((player) => (
                     <button
                         key={player.playerID}
                         disabled={playerContextObject.playerCode === player.playerID} // disable voting for self
                         onClick={() => setVotedForID(player.playerID)}
-                        className={`w-full py-3 rounded-lg text-lg font-medium text-[var(--dark)] dark:text-[var(--light)] 
-                            transition duration-500 bg-[var(--primary)] hover:bg-cyan-500 dark:bg-cyan-500 dark:hover:bg-cyan-600 hover:cursor-pointer
-                            disabled:bg-[var(--light)] disabled:dark:bg-[var(--secondary-dark)] disabled:border disabled:border-[var(--secondary)] disabled:cursor-not-allowed
+                        className={`w-full py-3 rounded-lg text-lg text-[var(--dark)] dark:text-[var(--light)] transition duration-500 hover:cursor-pointer
+                            bg-gray-50 dark:bg-gray-700 border border-[var(--secondary)] dark:border-[var(--secondary-dark)] hover:scale-105 disabled:hidden
                             ${voteForID === player.playerID ? 'ring-4 ring-[var(--primary)]' : ''} `}
                     >
                         <span className="text-xl">{player.name}</span>

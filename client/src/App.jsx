@@ -240,6 +240,19 @@ const App = () => {
         });
     };
 
+    const LeaveRoomButton = () => (
+        <>
+            <button onClick={() => { leaveRoom(roomCode, playerCode); }} // wait for leftRoom handler to get response
+                className="flex items-center gap-2 bg-[var(--danger)] hover:brightness-80 hover:cursor-pointer hover:scale-105 text-black 
+                    py-2 px-4 mx-auto rounded-lg font-medium transition duration-500 shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                </svg>
+                Leave Room
+            </button>
+        </>
+    );
+
     useEffect(() => {
         playerNameRef.current = playerName;
     }, [playerName]);
@@ -413,14 +426,8 @@ const App = () => {
 
                                 {/* Left Column: action card */}
                             <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6  mt-6">
-                                <button onClick={() => {leaveRoom(roomCode, playerCode); }} // wait for leftRoom handler to get response
-                                    className="flex items-center gap-2 bg-[var(--warning)] dark:bg-[var(--warning-dark)] hover:bg-[var(--warning-dark)] dark:hover:bg-yellow-600 text-black 
-                                    py-2 px-4 mx-auto rounded-lg font-medium transition duration-500 shadow-md">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-                                    </svg>
-                                    Leave Room
-                                </button>
+                                <LeaveRoomButton />
+                                
                                 <div className="text-center">
                                     <p className="text-[var(--dark)] dark:text-[var(--secondary)]">Room Code</p>
                                     <div className="flex items-center justify-center gap-2">
@@ -472,12 +479,7 @@ const App = () => {
                             
                                 {/* Left Column: Player Card (Location/Role Display) and action card (middle)*/}
                             <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6 mt-6">
-                                <button onClick={() => { leaveRoom(roomCode, playerCode);
-                                    }} // wait for leftRoom handler to get response
-                                    className="flex items-center gap-2 bg-[var(--warning)] dark:bg-[var(--warning-dark)] hover:bg-[var(--warning-dark)] dark:hover:bg-yellow-600 text-black 
-                                    py-2 px-4 mx-auto rounded-lg font-medium transition duration-500 shadow-md">
-                                    Leave Room
-                                </button>
+                                <LeaveRoomButton />
                                 {isGameRunning && <div className="flex justify-center text-2xl font-bold ">Time {countdown}</div>}
                                 <PlayerCard location={location} role={role} setModalSpyGuess={setModalSpyGuess}/>
                                 <ActionsCard playerList={playerList} view={view} onCallVote={callVote} onEndGame={endGame}/>
@@ -522,29 +524,6 @@ const App = () => {
         <div className="min-h-screen bg-[var(--light)] dark:bg-[var(--dark)] text-black dark:text-white font-sans flex flex-col items-center justify-center pt-4 px-4 transition duration-500">
             <div className='fixed top-0 flex w-full bg-[var(--primary)] dark:bg-[var(--primary-dark)] shadow-xl p-4 items-center justify-between'>
                 <h1 className='text-xl text-black dark:text-white'>Spyfall</h1>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("lobby") }}
-                    > lobby view
-                </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => { setModalRevealRole(true); 
-                    setRole("Ice cream vendor"); setLocation("Space station over antarctica");
-                  }}>
-                    reveal role modal
-                </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => { setView("loading"); setLoadingMessage("test message..."); }}>
-                    loading view
-                </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('This is an info toast!', 'info')}>
-                    Info Toast
-                </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Success! Operation completed.', 'success')}>
-                    Success Toast
-                </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Warning: Something might be wrong.', 'warning')}>
-                    Warning Toast
-                </button>
-                <button className="rounded-l border-1 border-black p-2" onClick={() => showToast('Error: Something went wrong!', 'error')}>
-                    Error Toast
-                </button>
                 <button className="rounded-l" onClick={toggleTheme}>
                     {theme === 'dark' ?
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
