@@ -504,6 +504,7 @@ const App = () => {
                                 , document.body )}
                             <div className="col-span-1 lg:col-start-1 xl:col-start-2 space-y-6 mt-6">
                                 <PlayerCard location={location} role={role} setModalSpyGuess={setModalSpyGuess} />
+                                <ActionsCard playerList={playerList}/>
                             </div>
                             <div className="col-span-1 lg:col-start-2 lg:col-span-2 xl:col-start-3 xl:col-span-2 space-y-6">
                                 <RoomChatCard roomChat={roomChat} sendChatMessage={sendChatMessage}/>
