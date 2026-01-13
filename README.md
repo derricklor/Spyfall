@@ -3,11 +3,10 @@
 ## Description
 A web-based implementation of the popular social deduction game SpyFall.
 
-## How to Run Locally
+## How to Run
 
 ### Prerequisites
 - Node.js and npm installed.
-- Vite (for client-side development)
 - MongoDB Community Edition installed and running as a service.
 
 #### MongoDB Installation (Windows)
@@ -40,76 +39,9 @@ A web-based implementation of the popular social deduction game SpyFall.
    ```bash
    npm install
    ```
-3. Start the client (Vite development server):
+3. Start the client:
    ```bash
    npm run dev
    ```
 
 The application should now be running and accessible in your web browser at the address provided by Vite (usually `http://localhost:5173`).
-
-## Serving the Client-Side Application for Production
-
-To serve the client-side application using the Node.js server, you need to build the Vite project and then copy the generated static assets to the server's public directory.
-
-1.  **Build the Client Application:**
-    Navigate to the `client` directory and run the build command:
-    ```bash
-    cd client
-    npm run build
-    ```
-    This will create a `dist` directory inside your `client` directory, containing the optimized HTML, CSS, and JavaScript files.
-
-2.  **Copy Built Assets to Server's Public Directory:**
-    Navigate back to the project root and copy the contents of `client/dist` to `server/public`.
-    ```bash
-    # From the project root
-    cp -r client/dist/* server/public/
-    ```
-    Now, when you start the server (either `npm run dev` in the `server` directory or using Docker Compose), it will serve the client-side application from `server/public`.
-
-## Production Setup with Docker Compose
-
-This project is configured to run in a production-like environment using Docker Compose. This setup includes the Node.js server and a MongoDB database.
-
-### Prerequisites
-
-*   [Docker](https://docs.docker.com/get-docker/)
-*   [Docker Compose](https://docs.docker.com/compose/install/)
-
-### Running the Application
-
-1.  **Build and run the services:**
-    Open a terminal in the root of the project and run the following command:
-    ```bash
-    docker-compose up
-    ```
-    This will build the server's Docker image, start the `server` and `mongo` services, and display the logs in your terminal.
-
-    To run the services in the background (detached mode), use the `-d` flag:
-    ```bash
-    docker-compose up -d
-    ```
-
-2.  **Stopping the services:**
-    If the services are running in the foreground, press `Ctrl+C` to stop them. If running in detached mode, use the following command:
-    ```bash
-    docker-compose down
-    ```
-
-### Configuration
-
-The Docker Compose setup uses environment variables defined in the `docker-compose.yml` file. These variables are directly injected into the server's container and are accessible by `server.js` via `process.env`. For local deployment, the optional .env file may be created.
-
-For a production deployment, you may need to change the `CORS_ORIGIN` to match your frontend's URL.
-
-```yaml
-services:
-  server:
-    # ...
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      MONGO_URI: mongodb://mongo:27017/spyfall_db
-      CORS_ORIGIN: http://localhost:5173 # Change this to your frontend's production URL
-    # ...
-```
