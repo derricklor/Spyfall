@@ -1,6 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
 import Card from './Card';
-import Button from './Button'
 import PlayerContext from '../contexts/PlayerContext';
 
 // Lobby view for joining or creating a game
