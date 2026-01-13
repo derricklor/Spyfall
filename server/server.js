@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -18,19 +19,18 @@ const io = new Server(server, {
         skipMiddlewares: true,  // whether to skip middlewares upon successful recovery
     },
     cors: {     //enable CORS during development
-        origin: 'http://localhost:5173'
+        origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
         // methods: ['GET', 'POST'],
     },
 });
 
 app.use(express.json());
 app.use(bodyParser.json());
-//app.use(cookieParser(cookieSecret))
 app.use(cors());
 
 const port = process.env.PORT || 3000;
 
-const mongo_uri = 'mongodb://localhost:27017/spyfall_db';
+const mongo_uri = process.env.MONGO_URI || 'mongodb://localhost:27017/spyfall_db';
 
 function serverLog(message) {
     console.log(`[SERVER]: ${message}`);
