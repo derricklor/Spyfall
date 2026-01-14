@@ -107,7 +107,7 @@ A basic `.env` file contains:
 NODE_ENV=production
 PORT=3000
 # MongoDB connection string for local development, change localhost to mongo service name when using docker compose
-MONGO_URI=mongodb://localhost:27017/spyfall_db
+MONGO_URI=mongodb://mongo:27017/spyfall_db
 
 # CORS origin for the frontend, change this to your frontend's production URL
 CORS_ORIGIN=http://localhost:5173
