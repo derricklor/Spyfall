@@ -4,6 +4,7 @@
 A web-based implementation of the popular social deduction game SpyFall.
 
 ## How to Run Locally
+- Setup and run the server and client on your localhost machine.
 
 ### Prerequisites
 - Node.js and npm installed.
@@ -69,7 +70,7 @@ To serve the client-side application using the Node.js server, you need to build
 
 ## Production Setup with Docker Compose
 
-This project is configured to run in a production-like environment using Docker Compose. This setup includes the Node.js server and a MongoDB database.
+This project is configured to run in a production-like environment using Docker Compose. This setup includes the Node.js server and a MongoDB database. The node and mongo service are setup to run under the same network and be able to connect and exchange information. A volume is created for the mongo service and be able to save persistent information.
 
 ### Prerequisites
 
@@ -98,18 +99,18 @@ This project is configured to run in a production-like environment using Docker 
 
 ### Configuration
 
-The Docker Compose setup uses environment variables defined in the `docker-compose.yml` file. These variables are directly injected into the server's container and are accessible by `server.js` via `process.env`. For local deployment, the optional .env file may be created.
+The Docker Compose setup uses environment secret variables defined in the `.env` file. These variables are directly linked to `docker-compose.yml` file and are not uploaded for security reason. 
 
-For a production deployment, you may need to change the `CORS_ORIGIN` to match your frontend's URL.
+A basic `.env` file contains:
 
 ```yaml
-services:
-  server:
-    # ...
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      MONGO_URI: mongodb://mongo:27017/spyfall_db
-      CORS_ORIGIN: http://localhost:5173 # Change this to your frontend's production URL
-    # ...
+NODE_ENV=production
+PORT=3000
+# MongoDB connection string for local development, change localhost to mongo service name when using docker compose
+MONGO_URI=mongodb://localhost:27017/spyfall_db
+
+# CORS origin for the frontend, change this to your frontend's production URL
+CORS_ORIGIN=http://localhost:5173
 ```
+
+For a production deployment, you may need to change the `CORS_ORIGIN` to match your frontend's URL. As well as replace the mongo db uri to match your production environment.
