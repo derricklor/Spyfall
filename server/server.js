@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -18,19 +19,21 @@ const io = new Server(server, {
         skipMiddlewares: true,  // whether to skip middlewares upon successful recovery
     },
     cors: {     //enable CORS during development
-        origin: 'http://localhost:5173'
+        origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
         // methods: ['GET', 'POST'],
     },
 });
 
 app.use(express.json());
 app.use(bodyParser.json());
-//app.use(cookieParser(cookieSecret))
 app.use(cors());
 
 const port = process.env.PORT || 3000;
+const mongo_uri = process.env.MONGO_URI || 'mongodb://localhost:27017/spyfall_db'; // default to docker compose mongo service or localhost for development
 
-const mongo_uri = 'mongodb://localhost:27017/spyfall_db';
+// allow serving of static files from public directory
+app.use(express.static('public'));
+
 
 function serverLog(message) {
     console.log(`[SERVER]: ${message}`);
@@ -62,62 +65,9 @@ function generateCode(length) {
     }
     return code;
 }
-// allow serving of static files from public directory
-app.use(express.static('public'));
-
-app.get('/api/locations', async (req, res) => {
-    try {
-        const locations = await Location.find({});
-        serverLog('Fetched locations from database.');
-        res.status(200).json(locations);
-    } catch (error) {
-        serverLog(`Error fetching locations: ${error.message}`);
-        res.status(500).json({ error: 'Error fetching locations' });
-    }
-});
-
-// set up a public endpoint to serve location images
-app.get('/api/location/:name', async (req, res) => {
-    //find the requested location image and return it
-
-    //check if the location name is valid
-
-    // try {
-    //     const location = await Location.findById(req.params.id);
-    //     if (location) {
-    //         serverLog(`Fetched location with ID: ${req.params.id}`);
-    //         res.status(200).json(location);
-    //     } else {
-    //         serverLog(`Location with ID: ${req.params.id} not found.`);
-    //         res.status(404).json({ error: 'Location not found' });
-    //     }
-    // } catch (error) {
-    //     serverLog(`Error fetching location: ${error.message}`);
-    //     res.status(500).json({ error: 'Error fetching location' });
-    // }
-});
-
-
-app.post('/api/add/location', async (req, res) => {
-    try {
-        const location = new Location(req.body);
-        const savedLocation = await location.save();
-        serverLog(`Added new location to database: ${savedLocation._id}`);
-        res.status(201).json(savedLocation);
-    } catch (error) {
-        serverLog(`Error adding location: ${error.message}`);
-        res.status(500).json({ error: 'Error adding location' });
-    }
-});
 
 
 // function to check if majority of players have voted for someone
-//if so, eliminate that player and the end game
-//if the eliminated player is the spy, they have one guess to pick the location
-//if they guess right, spies win, else non-spies win
-//if the eliminated player is not the spy, the game ends and the spies win
-//if all players have voted, end the voting early
-//reset votes and return to in-progress state if no one is eliminated
 function checkVotes(roomDocument) {
     let voteMap = new Map();
     const numMajority = Math.floor(roomDocument.players.length / 2) + 1; //more than half
