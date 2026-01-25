@@ -1,4 +1,4 @@
-
+require('dotenv').config();
 const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -10,18 +10,6 @@ const Location = require('./locationSchema'); // constructor schema
 const Room = require('./roomSchema');
 const initLocations = require('./initLocations');
 
-let port = 3000;
-let CORS_ORIGIN = 'http://localhost:5173'; // default to localhost for development
-let mongo_uri = 'mongodb://mongo:27017/spyfall_db'; // default to docker compose mongo service or localhost for development
-// check process.env.NODE_ENV for production or development
-if (process.env.NODE_ENV !== 'production') {
-    serverLog('Running in development mode with CORS enabled.');
-} else {
-    serverLog('Running in production mode.');// no default in production
-    port = process.env.PORT;
-    CORS_ORIGIN = process.env.CORS_ORIGIN;
-    mongo_uri = process.env.MONGO_URI;
-}
 
 const app = express();
 const server = http.createServer(app);
@@ -31,8 +19,8 @@ const io = new Server(server, {
         skipMiddlewares: true,  // whether to skip middlewares upon successful recovery
     },
     cors: {     //enable CORS during development
-        origin: [process.env.CORS_ORIGIN],
-        methods: ['GET', 'POST'],
+        origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
+        // methods: ['GET', 'POST'],
     },
 });
 
@@ -40,6 +28,8 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cors());
 
+const port = process.env.PORT || 3000;
+const mongo_uri = process.env.MONGO_URI || 'mongodb://mongo:27017/spyfall_db'; // default to docker compose mongo service or localhost for development
 
 // allow serving of static files from public directory
 app.use(express.static('public'));
@@ -48,8 +38,6 @@ app.use(express.static('public'));
 function serverLog(message) {
     console.log(`[SERVER]: ${message}`);
 }
-
-
 
 async function initDB() {
     try {

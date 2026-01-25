@@ -49,7 +49,7 @@ const App = () => {
     const playerNameRef = useRef(playerName);
 
     const showToast = (message, variant = 'info') => {
-        const id = crypto.randomUUID(); // replace with better id generator
+        const id = crypto.randomUUID();
         setToasts(prevToasts => [...prevToasts, { id, message, variant }]);
         setTimeout(() => {
             closeToast(id);
