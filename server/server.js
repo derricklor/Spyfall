@@ -10,6 +10,10 @@ const Location = require('./locationSchema'); // constructor schema
 const Room = require('./roomSchema');
 const initLocations = require('./initLocations');
 
+function serverLog(message) {
+    console.log(`[SERVER]: ${message}`);
+}
+
 let mongo_uri = '';
 let port = 0;
 let corsOptions = {};
@@ -41,10 +45,6 @@ app.use(cors(corsOptions));
 
 // allow serving of static files from public directory
 app.use(express.static('public'));
-
-function serverLog(message) {
-    console.log(`[SERVER]: ${message}`);
-}
 
 async function initDB() {
     try {
