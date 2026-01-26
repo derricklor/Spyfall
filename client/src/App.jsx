@@ -17,8 +17,8 @@ import Toast from './components/Toast';
 
 import { io } from 'socket.io-client';
 
-const URL = 'http://localhost:3000';
-const socket = io(URL);
+//const URL = 'http://localhost:3000'; for local development only
+const socket = io();// leave empty to connect to same origin as served from
 const TIMEOUT_MS = 5000;
 
 // --- Main App Component ---

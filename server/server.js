@@ -1,4 +1,4 @@
-require('dotenv').config();
+
 const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -10,6 +10,20 @@ const Location = require('./locationSchema'); // constructor schema
 const Room = require('./roomSchema');
 const initLocations = require('./initLocations');
 
+let mongo_uri = '';
+let port = 0;
+let corsOptions = {};
+if (process.env.NODE_ENV == 'production') {
+    serverLog('Running in production mode');
+    mongo_uri = process.env.MONGO_URI; // default to docker compose mongo service or localhost for development
+    port = process.env.PORT;
+    corsOptions = {origin: process.env.CORS_ORIGIN, methods: ['GET', 'POST']};
+} else {
+    serverLog('Running in development mode');
+    mongo_uri = 'mongodb://mongo:27017/spyfall_db';
+    port = 3000;
+    corsOptions = {origin: 'http://localhost:5173', methods: ['GET', 'POST']}; // in development, client app runs on vite default port 5173
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -18,22 +32,15 @@ const io = new Server(server, {
         maxDisconnectionDuration: 2 * 60 * 1000,// the backup duration of the sessions and the packets
         skipMiddlewares: true,  // whether to skip middlewares upon successful recovery
     },
-    cors: {     //enable CORS during development
-        origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
-        // methods: ['GET', 'POST'],
-    },
+    cors: corsOptions,
 });
 
 app.use(express.json());
 app.use(bodyParser.json());
-app.use(cors());
-
-const port = process.env.PORT || 3000;
-const mongo_uri = process.env.MONGO_URI || 'mongodb://mongo:27017/spyfall_db'; // default to docker compose mongo service or localhost for development
+app.use(cors(corsOptions));
 
 // allow serving of static files from public directory
 app.use(express.static('public'));
-
 
 function serverLog(message) {
     console.log(`[SERVER]: ${message}`);
@@ -65,7 +72,6 @@ function generateCode(length) {
     }
     return code;
 }
-
 
 // function to check if majority of players have voted for someone
 function checkVotes(roomDocument) {
