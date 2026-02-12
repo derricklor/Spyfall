@@ -1,12 +1,20 @@
 # SpyFall
 
+
 ## Description
 A web-based implementation of the popular social deduction game SpyFall.
 
-## How to Run
+
+## Watch Video Demo
+https://youtu.be/FVYtPxbIf5Q
+
+## How to Run Locally
+### `Switch branch to prod for docker compose version`
+- Setup and run the server and client on your localhost machine.
 
 ### Prerequisites
 - Node.js and npm installed.
+- Vite (for client-side development)
 - MongoDB Community Edition installed and running as a service.
 
 #### MongoDB Installation (Windows)
