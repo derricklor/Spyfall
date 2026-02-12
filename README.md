@@ -3,6 +3,9 @@
 ## Description
 A web-based implementation of the popular social deduction game SpyFall.
 
+## Watch Video Demo
+https://youtu.be/FVYtPxbIf5Q
+
 ## How to Run Locally
 - Setup and run the server and client on your localhost machine.
 

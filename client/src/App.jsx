@@ -1,5 +1,6 @@
 import './App.css'
 import React, { useState, useEffect, useRef, useContext } from 'react';
+import { v4 as uuidv4 } from 'uuid'; 
 import { createPortal } from 'react-dom';
 import PlayerContext from './contexts/PlayerContext'; // object context for player info, holds getters and setters
 // possibly add a RoomContext to hold room state information, simplifying the amount of global vars
@@ -49,7 +50,7 @@ const App = () => {
     const playerNameRef = useRef(playerName);
 
     const showToast = (message, variant = 'info') => {
-        const id = crypto.randomUUID();
+        const id = uuidv4();
         setToasts(prevToasts => [...prevToasts, { id, message, variant }]);
         setTimeout(() => {
             closeToast(id);
